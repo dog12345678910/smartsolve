@@ -1,0 +1,31 @@
+<svg width="280" height="48" viewBox="0 0 280 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="44" height="44" rx="10" fill="#1a1c2a"/>
+
+  <rect x="6" y="6" width="8.5" height="8.5" rx="2" fill="#d4a72c"/>
+  <text x="10.25" y="12.2" text-anchor="middle" font-family="system-ui" font-size="5.5" font-weight="800" fill="#0c0d12">S</text>
+  <rect x="16" y="6" width="8.5" height="8.5" rx="2" fill="#d4a72c"/>
+  <text x="20.25" y="12.2" text-anchor="middle" font-family="system-ui" font-size="5.5" font-weight="800" fill="#0c0d12">M</text>
+  <rect x="26" y="6" width="8.5" height="8.5" rx="2" fill="#d4a72c" opacity="0.9"/>
+  <text x="30.25" y="12.2" text-anchor="middle" font-family="system-ui" font-size="5.5" font-weight="800" fill="#0c0d12">A</text>
+  <rect x="36" y="6" width="8.5" height="8.5" rx="2" fill="#d4a72c" opacity="0.7"/>
+  <text x="40.25" y="12.2" text-anchor="middle" font-family="system-ui" font-size="5.5" font-weight="800" fill="#0c0d12">R</text>
+
+  <rect x="6" y="16" width="8.5" height="8.5" rx="2" fill="#d4a72c" opacity="0.85"/>
+  <text x="10.25" y="22.2" text-anchor="middle" font-family="system-ui" font-size="5.5" font-weight="800" fill="#0c0d12">T</text>
+  <rect x="16" y="16" width="8.5" height="8.5" rx="2" fill="#d4a72c" opacity="0.6"/>
+  <text x="20.25" y="22.2" text-anchor="middle" font-family="system-ui" font-size="5.5" font-weight="800" fill="#0c0d12">S</text>
+  <rect x="26" y="16" width="8.5" height="8.5" rx="2" fill="#d4a72c" opacity="0.4"/>
+  <text x="30.25" y="22.2" text-anchor="middle" font-family="system-ui" font-size="5.5" font-weight="700" fill="#0c0d12">O</text>
+
+  <rect x="6" y="26" width="8.5" height="8.5" rx="2" fill="#d4a72c" opacity="0.45"/>
+  <text x="10.25" y="32.2" text-anchor="middle" font-family="system-ui" font-size="5.5" font-weight="700" fill="#0c0d12">L</text>
+  <rect x="16" y="26" width="8.5" height="8.5" rx="2" fill="#d4a72c" opacity="0.28"/>
+  <text x="20.25" y="32.2" text-anchor="middle" font-family="system-ui" font-size="5.5" font-weight="700" fill="#0c0d12">V</text>
+
+  <rect x="6" y="36" width="8.5" height="8.5" rx="2" fill="#d4a72c" opacity="0.18"/>
+  <text x="10.25" y="42.2" text-anchor="middle" font-family="system-ui" font-size="5.5" font-weight="700" fill="#d4a72c" opacity="0.35">E</text>
+
+  <text x="58" y="31" font-family="DM Sans, system-ui, sans-serif" font-size="24" font-weight="700" letter-spacing="-0.5">
+    <tspan fill="#eae6dd">Smart</tspan><tspan fill="#d4a72c">Solve</tspan>
+  </text>
+</svg>

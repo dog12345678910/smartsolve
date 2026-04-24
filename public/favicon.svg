@@ -1,0 +1,37 @@
+<svg width="512" height="512" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="#1a1c2a"/>
+
+  <!-- Row 1: SMAR - all clearly gold, bold letters -->
+  <rect x="10" y="10" width="11" height="11" rx="3" fill="#d4a72c"/>
+  <text x="15.5" y="18.2" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7.5" font-weight="800" fill="#0c0d12">S</text>
+
+  <rect x="23" y="10" width="11" height="11" rx="3" fill="#d4a72c"/>
+  <text x="28.5" y="18.2" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7.5" font-weight="800" fill="#0c0d12">M</text>
+
+  <rect x="36" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.9"/>
+  <text x="41.5" y="18.2" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7.5" font-weight="800" fill="#0c0d12">A</text>
+
+  <rect x="49" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.7"/>
+  <text x="54.5" y="18.2" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7.5" font-weight="800" fill="#0c0d12">R</text>
+
+  <!-- Row 2: TSO - T bright, S/O fading -->
+  <rect x="10" y="23" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.85"/>
+  <text x="15.5" y="31.2" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7.5" font-weight="800" fill="#0c0d12">T</text>
+
+  <rect x="23" y="23" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.6"/>
+  <text x="28.5" y="31.2" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7.5" font-weight="800" fill="#0c0d12">S</text>
+
+  <rect x="36" y="23" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.4"/>
+  <text x="41.5" y="31.2" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7.5" font-weight="700" fill="#0c0d12">O</text>
+
+  <!-- Row 3: LV - noticeably faded but still readable -->
+  <rect x="10" y="36" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.45"/>
+  <text x="15.5" y="44.2" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7.5" font-weight="700" fill="#0c0d12">L</text>
+
+  <rect x="23" y="36" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.28"/>
+  <text x="28.5" y="44.2" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7.5" font-weight="700" fill="#0c0d12">V</text>
+
+  <!-- Row 4: E - edge of range -->
+  <rect x="10" y="49" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.18"/>
+  <text x="15.5" y="57.2" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7.5" font-weight="700" fill="#d4a72c" opacity="0.35">E</text>
+</svg>
