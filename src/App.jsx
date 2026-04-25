@@ -265,7 +265,7 @@ var SYS_PROMPT = "You are an expert Texas Hold'em poker analyst. You can read sc
 
 async function askAI(content) {
   var body = {
-    model: "claude-opus-4-7",
+    model: "claude-sonnet-4-6",
     max_tokens: 4096,
     system: SYS_PROMPT,
     messages: [{ role: "user", content: content }],
