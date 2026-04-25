@@ -264,6 +264,25 @@ function mkGrid(rs) {
 var SYS_PROMPT = "You are an expert Texas Hold'em poker analyst. You can read screenshots from ANY poker client including: ClubWPT Gold (web-based, sweepstakes, Chips currency — treat Chips as dollar amounts), PokerStars, GGPoker, WPN/ACR, 888, PartyPoker, ClubGG, Ignition, BetOnline, and any other poker site or app. For ClubWPT Gold specifically: chips are displayed as 'SC' (Sweeps Coins) or plain numbers, the hero seat is highlighted, cards are shown face-up for hero, and the table layout may be portrait-oriented. Read all visible information: hero cards, board cards, pot size, bet sizes, player positions, stack sizes, and action history. Respond ONLY in valid JSON (no markdown, no backticks). Structure: {\"hero_position\":\"BTN\",\"villain_position\":\"BB\",\"hero_cards\":\"Ah Kd\",\"villain_cards\":\"unknown\",\"community_cards\":\"8s 5s 2h Ts 8h\",\"final_pot\":\"860\",\"blinds\":\"5/10\",\"result\":\"Hero wins\",\"streets\":[{\"street\":\"Preflop\",\"board\":\"\",\"pot_at_start\":\"15\",\"action_summary\":\"Hero raises to 25, BB calls\",\"hero_actual_action\":\"Raise to 25\",\"gto_actions\":[{\"action\":\"Raise\",\"freq\":85,\"ev\":2.1,\"color\":\"#d4a72c\"},{\"action\":\"Call\",\"freq\":12,\"ev\":0.8,\"color\":\"#5b8def\"},{\"action\":\"Fold\",\"freq\":3,\"ev\":0,\"color\":\"#4a4a4a\"}],\"hero_chose\":\"Raise\",\"best_action\":\"Raise\",\"best_sizing\":\"2.5x\",\"reasoning\":\"Standard open\",\"verdict\":\"Best\",\"ev_loss\":0}],\"overall\":{\"grade\":\"A\",\"ev_lost\":0.5,\"summary\":\"Well played\",\"mistake\":\"None\",\"strength\":\"Good sizing\",\"takeaway\":\"Keep exploiting position\"}} Rules: gto_actions freq sum to 100. color: #d4a72c raise/bet, #4caf7d check, #5b8def call, #4a4a4a fold. verdict: Best/Good/Inaccurate/Mistake/Blunder.";
 
 async function askAI(content) {
+  var body = {
+    model: "claude-opus-4-7",
+    max_tokens: 4096,
+    system: SYS_PROMPT,
+    messages: [{ role: "user", content: content }],
+  };
+
+  var proxy = await fetch("/api/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (proxy.status !== 503) {
+    var pj = await proxy.json();
+    if (pj.error) throw new Error(pj.error.message);
+    var pt = pj.content.filter(function(b) { return b.type === "text"; }).map(function(b) { return b.text; }).join("");
+    return JSON.parse(pt.replace(/```json|```/g, "").trim());
+  }
+
   var apiKey = window.__SMARTSOLVE_API_KEY || localStorage.getItem("ss_api_key") || "";
   if (!apiKey) {
     apiKey = prompt("Enter your Anthropic API key to use AI features:");
@@ -278,12 +297,7 @@ async function askAI(content) {
       "anthropic-version": "2023-06-01",
       "anthropic-dangerous-direct-browser-access": "true",
     },
-    body: JSON.stringify({
-      model: "claude-opus-4-7",
-      max_tokens: 4096,
-      system: SYS_PROMPT,
-      messages: [{ role: "user", content: content }],
-    }),
+    body: JSON.stringify(body),
   });
   var j = await r.json();
   if (j.error) throw new Error(j.error.message);
