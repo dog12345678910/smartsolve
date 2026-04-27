@@ -1004,15 +1004,20 @@ function StudyPage() {
   var detailHand = sel || hover;
   var detailActions = detailHand ? getStudyActions(detailHand, spot, pos) : null;
 
-  /* Cell background */
-  function cellBg(actions) {
-    var p = actions[0].name;
-    if (p === "Raise") return "#4caf7d";
-    if (p === "3-Bet") return "rgba(212,169,60,0.55)";
-    if (p === "Call") return "rgba(91,141,239,0.45)";
+  /* Cell background: mixed cells render in orange (Pekarstas convention) */
+  var MIXED_COLOR = "#e07b3b";
+  function actionColor(name) {
+    if (name === "Raise" || name === "3-Bet" || name === "4-Bet" || name === "5-Bet") return "#4caf7d";
+    if (name === "Call") return "#e5c454";
+    if (name === "All-in") return "#9b6dd1";
     return "rgba(215,85,85,0.18)";
   }
+  function cellBg(actions) {
+    if (actions.length > 1) return MIXED_COLOR;
+    return actionColor(actions[0].name);
+  }
   function cellBdr(actions) {
+    if (actions.length > 1) return "rgba(224,123,59,0.3)";
     var p = actions[0].name;
     if (p === "Raise" || p === "3-Bet" || p === "4-Bet" || p === "5-Bet") return "rgba(76,175,125,0.3)";
     if (p === "Call") return "rgba(229,196,84,0.3)";
@@ -1043,13 +1048,13 @@ function StudyPage() {
   /* Legend items */
   var legendItems;
   if (spot === "rfi") {
-    legendItems = [["Raise", "#4caf7d"], ["Fold", "rgba(215,85,85,0.5)"]];
+    legendItems = [["Raise", "#4caf7d"], ["Mixed", "#e07b3b"], ["Fold", "rgba(215,85,85,0.5)"]];
   } else if (spot === "vs_open") {
-    legendItems = [["3-Bet", "#4caf7d"], ["Call", "#e5c454"], ["All-in", "#9b6dd1"], ["Fold", "rgba(215,85,85,0.5)"]];
+    legendItems = [["3-Bet", "#4caf7d"], ["Call", "#e5c454"], ["All-in", "#9b6dd1"], ["Mixed", "#e07b3b"], ["Fold", "rgba(215,85,85,0.5)"]];
   } else if (spot === "vs_3bet") {
-    legendItems = [["4-Bet", "#4caf7d"], ["Call", "#e5c454"], ["All-in", "#9b6dd1"], ["Fold", "rgba(215,85,85,0.5)"]];
+    legendItems = [["4-Bet", "#4caf7d"], ["Call", "#e5c454"], ["All-in", "#9b6dd1"], ["Mixed", "#e07b3b"], ["Fold", "rgba(215,85,85,0.5)"]];
   } else {
-    legendItems = [["5-Bet", "#4caf7d"], ["Call", "#e5c454"], ["All-in", "#9b6dd1"], ["Fold", "rgba(215,85,85,0.5)"]];
+    legendItems = [["5-Bet", "#4caf7d"], ["Call", "#e5c454"], ["All-in", "#9b6dd1"], ["Mixed", "#e07b3b"], ["Fold", "rgba(215,85,85,0.5)"]];
   }
 
   /* Position tip */
