@@ -3091,56 +3091,117 @@ export default function App() {
 
       {isHome && (
         <div style={{ animation: "fu 0.5s both" }}>
-          <div style={{ position: "relative", overflow: "hidden", padding: "48px 28px 40px", background: "linear-gradient(160deg, #0f1118 0%, #151928 40%, #1a1630 70%, #12101c 100%)" }}>
-            <div style={{ position: "absolute", top: -60, right: -40, width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle, rgba(212,167,44,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
-            <div style={{ position: "absolute", bottom: -80, left: -60, width: 260, height: 260, borderRadius: "50%", background: "radial-gradient(circle, rgba(91,141,239,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
+          {/* HERO */}
+          <div style={{ position: "relative", overflow: "hidden", padding: "56px 28px 56px", background: "linear-gradient(160deg, #0f1118 0%, #151928 40%, #1a1630 70%, #12101c 100%)" }}>
+            <div style={{ position: "absolute", top: -60, right: -40, width: 260, height: 260, borderRadius: "50%", background: "radial-gradient(circle, rgba(212,167,44,0.10) 0%, transparent 70%)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", bottom: -100, left: -80, width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle, rgba(91,141,239,0.07) 0%, transparent 70%)", pointerEvents: "none" }} />
             <div style={{ position: "relative", maxWidth: 680, margin: "0 auto" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 10, background: "#1a1c2a", border: "1px solid rgba(212,167,44,0.15)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", overflow: "hidden" }}>
-                  <svg width="36" height="36" viewBox="0 0 64 64" fill="none"><rect x="4" y="4" width="56" height="56" rx="10" fill="#1a1c2a"/><rect x="10" y="10" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="23" y="10" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="36" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.8"/><rect x="49" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.35"/><rect x="10" y="23" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="23" y="23" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.65"/><rect x="36" y="23" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.3"/><rect x="10" y="36" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.55"/><rect x="23" y="36" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.2"/><rect x="10" y="49" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.15"/></svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: C.txb, letterSpacing: "-0.03em", lineHeight: 1.1 }}>SmartSolve</div>
-                  <div style={{ fontSize: 12, fontFamily: "var(--m)", color: C.gold, letterSpacing: "0.08em", opacity: 0.7 }}>GTO POKER TRAINER</div>
-                </div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 12px", borderRadius: 999, background: "rgba(212,167,44,0.08)", border: "1px solid rgba(212,167,44,0.18)", marginBottom: 22 }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.gold, boxShadow: "0 0 8px " + C.gold }} />
+                <span style={{ fontSize: 11, fontFamily: "var(--m)", color: C.gold, letterSpacing: "0.06em", fontWeight: 700 }}>POWERED BY CLAUDE AI</span>
               </div>
-              <p style={{ fontSize: 16, color: C.tx, lineHeight: 1.6, maxWidth: 420, marginBottom: 28 }}>
-                Master preflop ranges, analyze hands with AI, and train against game-theory optimal strategy.
+              <h1 style={{ fontSize: 38, fontWeight: 800, color: C.txb, letterSpacing: "-0.035em", lineHeight: 1.05, margin: "0 0 14px", maxWidth: 560 }}>
+                See the right play <span style={{ color: C.gold }}>in seconds.</span>
+              </h1>
+              <p style={{ fontSize: 16, color: C.tx, lineHeight: 1.55, maxWidth: 480, margin: "0 0 26px", opacity: 0.9 }}>
+                Drop a screenshot from any poker site. Claude reads your cards, board, and action — then grades every street with the GTO line and your EV loss.
               </p>
-              <div style={{ display: "flex", gap: 10 }}>
-                {[
-                  { id: "trainer", label: "Start Training", sub: "Practice vs GTO", color: C.green },
-                  { id: "uploads", label: "Analyze Hand", sub: "Upload screenshot", color: C.gold },
-                  { id: "study", label: "Study Ranges", sub: "Browse positions", color: C.blue },
-                ].map(function(item) {
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button onClick={function() { go("uploads"); }} style={{
+                  fontFamily: "var(--f)", fontSize: 14, fontWeight: 700, color: "#1a1630",
+                  background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+                  border: "none", borderRadius: 10, padding: "13px 22px", cursor: "pointer",
+                  boxShadow: "0 4px 18px rgba(212,167,44,0.28)",
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                }}>
+                  Analyze a Hand
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke="#1a1630" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+                <button onClick={function() { go("trainer"); }} style={{
+                  fontFamily: "var(--f)", fontSize: 14, fontWeight: 600, color: C.txb,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  borderRadius: 10, padding: "13px 22px", cursor: "pointer",
+                }}>Start Training</button>
+              </div>
+              <div style={{ display: "flex", gap: 24, marginTop: 30, flexWrap: "wrap", fontFamily: "var(--m)" }}>
+                {[["46", "GTO charts"], ["8+", "poker clients"], ["A–F", "verdicts per hand"]].map(function(s) {
                   return (
-                    <button key={item.id} onClick={function() { go(item.id); }} style={{
-                      flex: 1, display: "flex", alignItems: "center", gap: 10,
-                      padding: "12px 14px", borderRadius: 10, cursor: "pointer",
-                      background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-                      fontFamily: "var(--f)", textAlign: "left",
-                    }}>
-                      <div style={{ width: 34, height: 34, borderRadius: 8, background: item.color + "12", border: "1px solid " + item.color + "20", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: item.color }} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: C.txb }}>{item.label}</div>
-                        <div style={{ fontSize: 11, color: C.txm }}>{item.sub}</div>
-                      </div>
-                    </button>
+                    <div key={s[1]}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: C.txb, letterSpacing: "-0.02em" }}>{s[0]}</div>
+                      <div style={{ fontSize: 11, color: C.txm, letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>{s[1]}</div>
+                    </div>
                   );
                 })}
               </div>
-              <div style={{ position: "absolute", top: 20, right: 0, display: "flex", gap: 6, opacity: 0.3, transform: "rotate(8deg)", pointerEvents: "none" }}>
-                <Crd r="A" sym={SD.s.s} clr={SD.s.c} sz={42} />
-                <Crd r="K" sym={SD.h.s} clr={SD.h.c} sz={42} />
+              <div style={{ position: "absolute", top: 0, right: -10, display: "flex", gap: 6, opacity: 0.22, transform: "rotate(8deg)", pointerEvents: "none" }}>
+                <Crd r="A" sym={SD.s.s} clr={SD.s.c} sz={48} />
+                <Crd r="K" sym={SD.h.s} clr={SD.h.c} sz={48} />
               </div>
             </div>
             <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 40, background: "linear-gradient(transparent, " + C.bg + ")", pointerEvents: "none" }} />
           </div>
 
-          <div style={{ padding: "24px 20px 0", maxWidth: 680, margin: "0 auto" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", color: C.txm, fontFamily: "var(--m)", marginBottom: 14 }}>ALL TOOLS</div>
+          {/* HOW IT WORKS */}
+          <div style={{ padding: "42px 20px 8px", maxWidth: 680, margin: "0 auto" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: C.gold, fontFamily: "var(--m)", marginBottom: 8, textTransform: "uppercase" }}>How it works</div>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: C.txb, letterSpacing: "-0.02em", margin: "0 0 22px" }}>From hand to fix in three steps.</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10 }}>
+              {[
+                { n: "01", t: "Upload", d: "Screenshot any hand from ClubWPT Gold, PokerStars, GG, ACR, 888, ClubGG and more. Drag, drop, done.", c: C.amber },
+                { n: "02", t: "Analyze", d: "Claude reads your cards, the board, and every action. Get GTO frequencies, EV loss, and a verdict for each street.", c: C.gold },
+                { n: "03", t: "Improve", d: "Drill against real GTO ranges in the Trainer. Track accuracy, streaks, and the bb you're leaving on the table.", c: C.green },
+              ].map(function(s) {
+                return (
+                  <div key={s.n} style={{ display: "flex", gap: 16, padding: "18px 18px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 14 }}>
+                    <div style={{ flexShrink: 0, width: 48, height: 48, borderRadius: 12, background: s.c + "14", border: "1px solid " + s.c + "30", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--m)", fontWeight: 800, fontSize: 14, color: s.c, letterSpacing: "0.02em" }}>{s.n}</div>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: C.txb, marginBottom: 4 }}>{s.t}</div>
+                      <div style={{ fontSize: 13, color: C.txm, lineHeight: 1.55 }}>{s.d}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* FEATURE PILLARS */}
+          <div style={{ padding: "36px 20px 8px", maxWidth: 680, margin: "0 auto" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: C.gold, fontFamily: "var(--m)", marginBottom: 8, textTransform: "uppercase" }}>What's inside</div>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: C.txb, letterSpacing: "-0.02em", margin: "0 0 22px" }}>A poker lab in your pocket.</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {[
+                { t: "AI Hand Analysis", d: "Claude Sonnet grades every street with EV loss and verdicts: Best, Good, Inaccuracy, Mistake, Blunder.", c: C.gold, go: "uploads" },
+                { t: "GTO Trainer", d: "Quiz drills with timed mode, streak tracking, and live accuracy. Beat the chart, not the table.", c: C.green, go: "trainer" },
+                { t: "46 Real GTO Charts", d: "Pekarstas pack: RFI, vs Open, vs 3-Bet, vs 4-Bet across every position. Mixed strategies rendered honestly.", c: C.blue, go: "study" },
+                { t: "Solve Any Spot", d: "Describe a hand in text or voice. Get GTO frequencies and the reasoning per street.", c: C.amber, go: "custom" },
+              ].map(function(f) {
+                return (
+                  <div key={f.t} onClick={function() { go(f.go); }} style={{ padding: "18px 18px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 14, cursor: "pointer", transition: "all 0.15s" }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: f.c + "14", border: "1px solid " + f.c + "28", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: f.c }} />
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.txb, marginBottom: 5 }}>{f.t}</div>
+                    <div style={{ fontSize: 12, color: C.txm, lineHeight: 1.5 }}>{f.d}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* CLIENT LOGOS / TRUST STRIP */}
+          <div style={{ padding: "32px 20px 0", maxWidth: 680, margin: "0 auto" }}>
+            <div style={{ padding: "16px 18px", background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 12, textAlign: "center" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", color: C.txm, fontFamily: "var(--m)", marginBottom: 8, textTransform: "uppercase" }}>Reads screenshots from</div>
+              <div style={{ fontSize: 13, color: C.tx, lineHeight: 1.6, fontFamily: "var(--m)", letterSpacing: "0.02em" }}>
+                ClubWPT Gold · PokerStars · GGPoker · ACR · 888 · ClubGG · Ignition · BetOnline
+              </div>
+            </div>
+          </div>
+
+          {/* ALL TOOLS GRID */}
+          <div style={{ padding: "36px 20px 0", maxWidth: 680, margin: "0 auto" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: C.txm, fontFamily: "var(--m)", marginBottom: 14, textTransform: "uppercase" }}>All tools</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               {nav.map(function(n, i) {
                 var accent = accents[i] || C.txm;
@@ -3167,6 +3228,29 @@ export default function App() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* FINAL CTA */}
+          <div style={{ padding: "44px 20px 32px", maxWidth: 680, margin: "0 auto" }}>
+            <div style={{ position: "relative", overflow: "hidden", padding: "32px 28px", background: "linear-gradient(135deg, rgba(212,167,44,0.08), rgba(91,141,239,0.05))", border: "1px solid rgba(212,167,44,0.18)", borderRadius: 16, textAlign: "center" }}>
+              <h2 style={{ fontSize: 22, fontWeight: 700, color: C.txb, letterSpacing: "-0.02em", margin: "0 0 8px" }}>Stop guessing. Start solving.</h2>
+              <p style={{ fontSize: 14, color: C.tx, opacity: 0.85, margin: "0 0 20px", maxWidth: 380, marginLeft: "auto", marginRight: "auto", lineHeight: 1.5 }}>
+                Free to try. No account needed. Bring your own Anthropic key or use the hosted analyzer.
+              </p>
+              <button onClick={function() { go("uploads"); }} style={{
+                fontFamily: "var(--f)", fontSize: 14, fontWeight: 700, color: "#1a1630",
+                background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+                border: "none", borderRadius: 10, padding: "13px 26px", cursor: "pointer",
+                boxShadow: "0 4px 18px rgba(212,167,44,0.28)",
+              }}>Try It Free</button>
+            </div>
+          </div>
+
+          {/* FOOTER */}
+          <div style={{ padding: "16px 20px 40px", maxWidth: 680, margin: "0 auto", textAlign: "center", fontFamily: "var(--m)" }}>
+            <div style={{ fontSize: 11, color: C.txm, letterSpacing: "0.06em", opacity: 0.6 }}>
+              SmartSolve · GTO Poker Trainer · Built with Claude
             </div>
           </div>
         </div>
