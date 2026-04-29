@@ -3038,6 +3038,142 @@ function HelpPage() {
 
 /* MAIN APP */
 /* MAIN APP */
+function LandingPage(props) {
+  var onSignIn = props.onSignIn;
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.tx, fontFamily: "var(--f)", overflowX: "hidden" }}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+      {/* HERO */}
+      <section style={{ position: "relative", padding: "64px 24px 88px", background: "linear-gradient(160deg, #0f1118 0%, #151928 45%, #1a1630 100%)", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -80, right: -60, width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle, rgba(212,167,44,0.10) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: -100, left: -80, width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle, rgba(91,141,239,0.07) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "relative", maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 9, background: "#1a1c2a", border: "1px solid rgba(212,167,44,0.18)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+              <svg width="32" height="32" viewBox="0 0 64 64" fill="none"><rect x="4" y="4" width="56" height="56" rx="10" fill="#1a1c2a"/><rect x="10" y="10" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="23" y="10" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="36" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.8"/><rect x="49" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.35"/><rect x="10" y="23" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="23" y="23" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.65"/></svg>
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: C.txb, letterSpacing: "-0.03em" }}>SmartSolve</div>
+          </div>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 12px", borderRadius: 999, background: "rgba(212,167,44,0.08)", border: "1px solid rgba(212,167,44,0.20)", marginBottom: 22 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.gold, boxShadow: "0 0 8px " + C.gold }} />
+            <span style={{ fontSize: 11, fontFamily: "var(--m)", color: C.gold, letterSpacing: "0.06em", fontWeight: 700 }}>POWERED BY CLAUDE AI</span>
+          </div>
+          <h1 style={{ fontSize: 44, fontWeight: 800, color: C.txb, letterSpacing: "-0.04em", lineHeight: 1.05, margin: "0 0 18px" }}>
+            See the right play <span style={{ color: C.gold }}>in seconds.</span>
+          </h1>
+          <p style={{ fontSize: 16, color: C.tx, lineHeight: 1.55, maxWidth: 540, margin: "0 auto 32px", opacity: 0.92 }}>
+            Drop a screenshot from any poker site. Claude reads your cards, board, and action — then grades every street with the GTO line and your EV loss.
+          </p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginBottom: 30 }}>
+            <button onClick={onSignIn} style={{
+              fontFamily: "var(--f)", fontSize: 14, fontWeight: 700, color: "#1a1630",
+              background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+              border: "none", borderRadius: 10, padding: "14px 28px", cursor: "pointer",
+              boxShadow: "0 4px 18px rgba(212,167,44,0.28)",
+              display: "inline-flex", alignItems: "center", gap: 8,
+            }}>
+              Get Started Free
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke="#1a1630" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+            <button onClick={onSignIn} style={{
+              fontFamily: "var(--f)", fontSize: 14, fontWeight: 600, color: C.txb,
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.10)",
+              borderRadius: 10, padding: "14px 24px", cursor: "pointer",
+            }}>Sign in</button>
+          </div>
+          <div style={{ display: "flex", gap: 26, justifyContent: "center", flexWrap: "wrap", fontFamily: "var(--m)" }}>
+            {[["46", "GTO charts"], ["8+", "poker clients"], ["A–F", "hand grading"]].map(function(s) {
+              return (
+                <div key={s[1]} style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: C.txb }}>{s[0]}</div>
+                  <div style={{ fontSize: 10, color: C.txm, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}>{s[1]}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section style={{ padding: "56px 24px 24px", maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: C.gold, fontFamily: "var(--m)", marginBottom: 8, textAlign: "center", textTransform: "uppercase" }}>How it works</div>
+        <h2 style={{ fontSize: 26, fontWeight: 700, color: C.txb, textAlign: "center", letterSpacing: "-0.02em", margin: "0 0 28px" }}>From hand to fix in three steps.</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10 }}>
+          {[
+            { n: "01", t: "Upload", d: "Screenshot any hand from ClubWPT Gold, PokerStars, GG, ACR, 888, ClubGG. Drag, drop, done.", c: C.amber },
+            { n: "02", t: "Analyze", d: "Claude reads your cards, the board, and every action. Get GTO frequencies, EV loss, and a verdict for each street.", c: C.gold },
+            { n: "03", t: "Improve", d: "Drill against real GTO ranges in the Trainer. Track accuracy, streaks, and the bb you're leaving on the table.", c: C.green },
+          ].map(function(s) {
+            return (
+              <div key={s.n} style={{ display: "flex", gap: 16, padding: 18, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 14 }}>
+                <div style={{ flexShrink: 0, width: 48, height: 48, borderRadius: 12, background: s.c + "14", border: "1px solid " + s.c + "30", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--m)", fontWeight: 800, fontSize: 14, color: s.c }}>{s.n}</div>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.txb, marginBottom: 4 }}>{s.t}</div>
+                  <div style={{ fontSize: 13, color: C.txm, lineHeight: 1.55 }}>{s.d}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section style={{ padding: "32px 24px 24px", maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: C.gold, fontFamily: "var(--m)", marginBottom: 8, textAlign: "center", textTransform: "uppercase" }}>What's inside</div>
+        <h2 style={{ fontSize: 26, fontWeight: 700, color: C.txb, textAlign: "center", letterSpacing: "-0.02em", margin: "0 0 28px" }}>A poker lab in your pocket.</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {[
+            { t: "AI Hand Analysis", d: "Claude grades every street with EV loss and verdicts.", c: C.gold },
+            { t: "GTO Trainer", d: "Quiz drills with timed mode, streaks, and live accuracy.", c: C.green },
+            { t: "46 GTO Charts", d: "RFI, vs Open, vs 3-Bet, vs 4-Bet across every position.", c: C.blue },
+            { t: "Solve Any Spot", d: "Describe a hand in text or voice — get GTO frequencies.", c: C.amber },
+          ].map(function(f) {
+            return (
+              <div key={f.t} style={{ padding: 18, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 14 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: f.c + "14", border: "1px solid " + f.c + "28", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: f.c }} />
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: C.txb, marginBottom: 5 }}>{f.t}</div>
+                <div style={{ fontSize: 12, color: C.txm, lineHeight: 1.5 }}>{f.d}</div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* TRUST STRIP */}
+      <section style={{ padding: "24px 24px 0", maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ padding: "16px 18px", background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 12, textAlign: "center" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", color: C.txm, fontFamily: "var(--m)", marginBottom: 8, textTransform: "uppercase" }}>Reads screenshots from</div>
+          <div style={{ fontSize: 13, color: C.tx, lineHeight: 1.6, fontFamily: "var(--m)" }}>
+            ClubWPT Gold · PokerStars · GGPoker · ACR · 888 · ClubGG · Ignition · BetOnline
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section style={{ padding: "40px 24px 24px", maxWidth: 720, margin: "0 auto" }}>
+        <div style={{ position: "relative", overflow: "hidden", padding: "36px 28px", background: "linear-gradient(135deg, rgba(212,167,44,0.10), rgba(91,141,239,0.06))", border: "1px solid rgba(212,167,44,0.20)", borderRadius: 16, textAlign: "center" }}>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.txb, margin: "0 0 8px", letterSpacing: "-0.02em" }}>Ready to stop guessing?</h2>
+          <p style={{ fontSize: 14, color: C.tx, margin: "0 auto 22px", maxWidth: 380, opacity: 0.9, lineHeight: 1.5 }}>Free while in beta. Takes 10 seconds to sign up.</p>
+          <button onClick={onSignIn} style={{
+            fontFamily: "var(--f)", fontSize: 14, fontWeight: 700, color: "#1a1630",
+            background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+            border: "none", borderRadius: 10, padding: "14px 30px", cursor: "pointer",
+            boxShadow: "0 4px 18px rgba(212,167,44,0.28)",
+          }}>Sign in to start</button>
+        </div>
+      </section>
+
+      <div style={{ padding: "16px 24px 32px", textAlign: "center", fontFamily: "var(--m)", fontSize: 11, color: C.txm, opacity: 0.6 }}>
+        SmartSolve · GTO Poker Trainer
+      </div>
+    </div>
+  );
+}
+
 function SignInGate(props) {
   var _mode = useState("signin"); var mode = _mode[0]; var setMode = _mode[1];
   var _email = useState(""); var email = _email[0]; var setEmail = _email[1];
@@ -3092,6 +3228,17 @@ function SignInGate(props) {
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.tx, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--f)" }}>
+      {props.onBack && (
+        <button onClick={props.onBack} style={{
+          position: "absolute", top: 20, left: 20,
+          fontFamily: "var(--m)", fontSize: 11, fontWeight: 600, color: C.txm,
+          background: "transparent", border: "none", cursor: "pointer", padding: "6px 10px",
+          display: "flex", alignItems: "center", gap: 6,
+        }}>
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" stroke={C.txm} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Back
+        </button>
+      )}
       <div style={{ width: "100%", maxWidth: 380 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28, justifyContent: "center" }}>
           <div style={{ width: 36, height: 36, borderRadius: 8, background: "#1a1c2a", border: "1px solid rgba(212,167,44,0.15)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
@@ -3178,6 +3325,7 @@ export default function App() {
   var _hist = useState([]); var hist = _hist[0]; var setHist = _hist[1];
   var _menu = useState(false); var menu = _menu[0]; var setMenu = _menu[1];
   var _viewHand = useState(null); var viewHand = _viewHand[0]; var setViewHand = _viewHand[1];
+  var _showAuth = useState(false); var showAuth = _showAuth[0]; var setShowAuth = _showAuth[1];
 
   /* Load hand history for this user (must run before any early returns) */
   var userId = auth.user && auth.user.id;
@@ -3193,7 +3341,8 @@ export default function App() {
     return <div style={{ minHeight: "100vh", background: C.bg, color: C.txm, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--m)", fontSize: 12, letterSpacing: "0.08em" }}>LOADING...</div>;
   }
   if (!auth.user) {
-    return <SignInGate />;
+    if (!showAuth) return <LandingPage onSignIn={function() { setShowAuth(true); }} />;
+    return <SignInGate onBack={function() { setShowAuth(false); }} />;
   }
   var signOut = function() { if (supabase) supabase.auth.signOut(); };
 
