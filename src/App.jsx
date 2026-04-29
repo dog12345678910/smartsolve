@@ -3160,6 +3160,16 @@ export default function App() {
   var _menu = useState(false); var menu = _menu[0]; var setMenu = _menu[1];
   var _viewHand = useState(null); var viewHand = _viewHand[0]; var setViewHand = _viewHand[1];
 
+  /* Load hand history for this user (must run before any early returns) */
+  var userId = auth.user && auth.user.id;
+  useEffect(function() {
+    if (!userId || !supabase) return;
+    supabase.from("hand_history").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50)
+      .then(function(res) {
+        if (res.data) setHist(res.data.map(function(r) { return r.data; }).filter(Boolean));
+      });
+  }, [userId]);
+
   if (auth.loading) {
     return <div style={{ minHeight: "100vh", background: C.bg, color: C.txm, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--m)", fontSize: 12, letterSpacing: "0.08em" }}>LOADING...</div>;
   }
@@ -3167,15 +3177,6 @@ export default function App() {
     return <SignInGate />;
   }
   var signOut = function() { if (supabase) supabase.auth.signOut(); };
-
-  /* Load hand history for this user */
-  useEffect(function() {
-    if (!auth.user || !supabase) return;
-    supabase.from("hand_history").select("*").eq("user_id", auth.user.id).order("created_at", { ascending: false }).limit(50)
-      .then(function(res) {
-        if (res.data) setHist(res.data.map(function(r) { return r.data; }).filter(Boolean));
-      });
-  }, [auth.user && auth.user.id]);
 
   var addH = function(d) {
     if (!d || !d.hero_cards) return;
