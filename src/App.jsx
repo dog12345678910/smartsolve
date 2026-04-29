@@ -2194,18 +2194,19 @@ function RangeBuilderPage() {
   );
 }
 
-function BankrollPage() {
+function BankrollPage(props) {
+  var user = props.user;
   var GAMES = ["NLH", "PLO", "PLO5", "Mixed"];
   var STAKES = [".25/.50", ".50/1", "1/2", "1/3", "2/5", "3/6", "5/10", "10/20", "10/25", "25/50"];
 
-  var _sessions = useState([
-    { id: 1, date: "2026-03-01", game: "NLH", stakes: "1/2", buyin: 200, cashout: 487, hours: 4.5, notes: "" },
-    { id: 2, date: "2026-02-28", game: "NLH", stakes: "1/2", buyin: 200, cashout: 122, hours: 3, notes: "" },
-    { id: 3, date: "2026-02-25", game: "NLH", stakes: "2/5", buyin: 500, cashout: 815, hours: 6, notes: "" },
-    { id: 4, date: "2026-02-22", game: "PLO", stakes: "1/2", buyin: 300, cashout: 540, hours: 5, notes: "" },
-    { id: 5, date: "2026-02-20", game: "NLH", stakes: "2/5", buyin: 500, cashout: 290, hours: 4, notes: "" },
-  ]);
+  var _sessions = useState([]);
   var sessions = _sessions[0]; var setSessions = _sessions[1];
+
+  useEffect(function() {
+    if (!user || !supabase) return;
+    supabase.from("bankroll_sessions").select("*").eq("user_id", user.id).order("date", { ascending: false })
+      .then(function(res) { if (res.data) setSessions(res.data); });
+  }, [user && user.id]);
 
   /* Game/stakes - remember last used */
   var _game = useState("NLH"); var game = _game[0]; var setGame = _game[1];
@@ -2247,12 +2248,15 @@ function BankrollPage() {
     var bi = parseFloat(buyin); var co = parseFloat(cashout);
     if (isNaN(bi) || isNaN(co)) return;
     var hrs = +(elapsed / 3600000).toFixed(1);
-    var s = {
-      id: Date.now(), date: new Date().toISOString().slice(0, 10),
+    var row = {
+      user_id: user && user.id, date: new Date().toISOString().slice(0, 10),
       game: game, stakes: stakes, buyin: bi, cashout: co, hours: hrs, notes: notes,
     };
-    setSessions(function(prev) { return [s].concat(prev); });
     setBuyin(""); setCashout(""); setNotes(""); setTimerStart(null); setElapsed(0); setPhase("idle");
+    if (supabase && user) {
+      supabase.from("bankroll_sessions").insert(row).select().single()
+        .then(function(res) { if (res.data) setSessions(function(prev) { return [res.data].concat(prev); }); });
+    }
   };
 
   var cancelSession = function() {
@@ -2263,15 +2267,21 @@ function BankrollPage() {
   var quickSave = function() {
     var bi = parseFloat(buyin); var co = parseFloat(cashout);
     if (isNaN(bi) || isNaN(co)) return;
-    var s = {
-      id: Date.now(), date: new Date().toISOString().slice(0, 10),
+    var row = {
+      user_id: user && user.id, date: new Date().toISOString().slice(0, 10),
       game: game, stakes: stakes, buyin: bi, cashout: co, hours: 0, notes: notes,
     };
-    setSessions(function(prev) { return [s].concat(prev); });
     setBuyin(""); setCashout(""); setNotes(""); setPhase("idle");
+    if (supabase && user) {
+      supabase.from("bankroll_sessions").insert(row).select().single()
+        .then(function(res) { if (res.data) setSessions(function(prev) { return [res.data].concat(prev); }); });
+    }
   };
 
-  var deleteSession = function(id) { setSessions(function(prev) { return prev.filter(function(s) { return s.id !== id; }); }); };
+  var deleteSession = function(id) {
+    setSessions(function(prev) { return prev.filter(function(s) { return s.id !== id; }); });
+    if (supabase) supabase.from("bankroll_sessions").delete().eq("id", id).then(function() {});
+  };
 
   var previewProfit = (parseFloat(cashout) || 0) - (parseFloat(buyin) || 0);
 
@@ -3158,7 +3168,31 @@ export default function App() {
   }
   var signOut = function() { if (supabase) supabase.auth.signOut(); };
 
-  var addH = function(d) { if (d && d.hero_cards) setHist(function(h) { return [d].concat(h).slice(0, 50); }); };
+  /* Load hand history for this user */
+  useEffect(function() {
+    if (!auth.user || !supabase) return;
+    supabase.from("hand_history").select("*").eq("user_id", auth.user.id).order("created_at", { ascending: false }).limit(50)
+      .then(function(res) {
+        if (res.data) setHist(res.data.map(function(r) { return r.data; }).filter(Boolean));
+      });
+  }, [auth.user && auth.user.id]);
+
+  var addH = function(d) {
+    if (!d || !d.hero_cards) return;
+    setHist(function(h) { return [d].concat(h).slice(0, 50); });
+    if (supabase && auth.user) {
+      supabase.from("hand_history").insert({
+        user_id: auth.user.id,
+        hero_cards: d.hero_cards || null,
+        hero_position: d.hero_position || null,
+        villain_position: d.villain_position || null,
+        community_cards: d.community_cards || null,
+        grade: d.overall && d.overall.grade ? d.overall.grade : null,
+        ev_lost: d.overall && d.overall.ev_lost != null ? d.overall.ev_lost : null,
+        data: d,
+      }).then(function() {});
+    }
+  };
   var go = function(id) { setPg(id); setMenu(false); };
   var openHand = function(h) { setViewHand(h); setPg("uploads"); setMenu(false); };
 
@@ -3329,7 +3363,7 @@ export default function App() {
           {pg === "custom" && <CustomPage />}
           {pg === "builder" && <RangeBuilderPage />}
           {pg === "equity" && <EquityPage />}
-          {pg === "bankroll" && <BankrollPage />}
+          {pg === "bankroll" && <BankrollPage user={auth.user} />}
           {pg === "hands" && <HandsPage history={hist} onView={openHand} />}
           {pg === "reports" && <ReportsPage />}
           {pg === "drills" && <DrillsPage onGo={go} />}
