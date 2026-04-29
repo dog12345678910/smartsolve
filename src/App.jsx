@@ -1497,6 +1497,47 @@ function TrainerPage() {
         </div>
       </div>
 
+      {/* Poker table — pick position by tapping a seat */}
+      <div style={{ position: "relative", width: "100%", maxWidth: 380, margin: "0 auto 16px", aspectRatio: "1.6 / 1" }}>
+        <div style={{ position: "absolute", inset: "10% 6%", borderRadius: "50%", background: "radial-gradient(ellipse at 50% 40%, #1c5e3f 0%, #0e3d27 70%, #082416 100%)", border: "3px solid #5d3a16", boxShadow: "inset 0 4px 20px rgba(0,0,0,0.45), 0 6px 24px rgba(0,0,0,0.5)" }} />
+        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center", pointerEvents: "none" }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", color: C.gold, opacity: 0.7, fontFamily: "var(--m)" }}>{mode === "rfi" ? "OPEN" : "FACING OPEN"}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.txb, marginTop: 4, fontFamily: "var(--m)", letterSpacing: "-0.01em" }}>{pos.replace("BB vs ", "BB v ")}</div>
+        </div>
+        {SEATS.map(function(seat) {
+          var isHero, isVillain, canClick;
+          if (mode === "rfi") {
+            isHero = seat.id === pos;
+            isVillain = false;
+            canClick = true;
+          } else {
+            var villainPos = pos.replace("BB vs ", "");
+            isHero = seat.id === "BB";
+            isVillain = seat.id === villainPos;
+            canClick = seat.id !== "BB";
+          }
+          return (
+            <button key={seat.id} disabled={!canClick} onClick={function() {
+              var newPos = mode === "rfi" ? seat.id : "BB vs " + seat.id;
+              resetAll(newPos);
+            }} style={{
+              position: "absolute",
+              left: seat.x + "%", top: seat.y + "%",
+              transform: "translate(-50%, -50%)",
+              width: 50, height: 50, borderRadius: "50%",
+              background: isHero ? "linear-gradient(135deg," + C.gold + "," + C.goldL + ")" : isVillain ? "rgba(212,168,83,0.20)" : "rgba(20,22,30,0.85)",
+              border: "1.5px solid " + (isHero ? C.gold : isVillain ? C.amber : "rgba(255,255,255,0.12)"),
+              color: isHero ? "#0a0a10" : isVillain ? C.amber : C.tx,
+              fontFamily: "var(--m)", fontSize: 11, fontWeight: 800, letterSpacing: "0.02em",
+              cursor: canClick ? "pointer" : "default",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: isHero ? "0 4px 16px rgba(212,167,44,0.45)" : isVillain ? "0 0 0 1.5px rgba(212,168,83,0.10)" : "0 2px 6px rgba(0,0,0,0.4)",
+              transition: "all 0.15s", padding: 0,
+            }}>{seat.id}</button>
+          );
+        })}
+      </div>
+
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, marginBottom: 16 }}>
         {[
