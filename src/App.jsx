@@ -3055,10 +3055,6 @@ function LandingPage(props) {
             </div>
             <div style={{ fontSize: 22, fontWeight: 700, color: C.txb, letterSpacing: "-0.03em" }}>SmartSolve</div>
           </div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 12px", borderRadius: 999, background: "rgba(212,167,44,0.08)", border: "1px solid rgba(212,167,44,0.20)", marginBottom: 22 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.gold, boxShadow: "0 0 8px " + C.gold }} />
-            <span style={{ fontSize: 11, fontFamily: "var(--m)", color: C.gold, letterSpacing: "0.06em", fontWeight: 700 }}>POWERED BY CLAUDE AI</span>
-          </div>
           <h1 style={{ fontSize: 44, fontWeight: 800, color: C.txb, letterSpacing: "-0.04em", lineHeight: 1.05, margin: "0 0 18px" }}>
             See the right play <span style={{ color: C.gold }}>in seconds.</span>
           </h1>
