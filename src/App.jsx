@@ -621,33 +621,11 @@ async function askAI(content) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (proxy.status !== 503) {
-    var pj = await proxy.json();
-    if (pj.error) throw new Error(pj.error.message);
-    var pt = pj.content.filter(function(b) { return b.type === "text"; }).map(function(b) { return b.text; }).join("");
-    return JSON.parse(pt.replace(/```json|```/g, "").trim());
-  }
-
-  var apiKey = window.__SMARTSOLVE_API_KEY || localStorage.getItem("ss_api_key") || "";
-  if (!apiKey) {
-    apiKey = prompt("Enter your Anthropic API key to use AI features:");
-    if (apiKey) localStorage.setItem("ss_api_key", apiKey);
-    else throw new Error("API key required for AI features.");
-  }
-  var r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify(body),
-  });
-  var j = await r.json();
-  if (j.error) throw new Error(j.error.message);
-  var t = j.content.filter(function(b) { return b.type === "text"; }).map(function(b) { return b.text; }).join("");
-  return JSON.parse(t.replace(/```json|```/g, "").trim());
+  var pj = await proxy.json();
+  if (proxy.status === 503) throw new Error("AI is temporarily unavailable. Please try again in a moment.");
+  if (pj.error) throw new Error(pj.error.message);
+  var pt = pj.content.filter(function(b) { return b.type === "text"; }).map(function(b) { return b.text; }).join("");
+  return JSON.parse(pt.replace(/```json|```/g, "").trim());
 }
 
 /* ICONS */
