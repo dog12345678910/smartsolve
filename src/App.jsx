@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Analytics } from "@vercel/analytics/react";
+import { supabase, supabaseConfigured } from "./supabase";
 
 const C = {
   bg: "#0c0d12", bg1: "#131520", bg2: "#1a1c2a", bg3: "#22253a",
@@ -3008,11 +3009,148 @@ function HelpPage() {
 
 /* MAIN APP */
 /* MAIN APP */
+function SignInGate(props) {
+  var _mode = useState("signin"); var mode = _mode[0]; var setMode = _mode[1];
+  var _email = useState(""); var email = _email[0]; var setEmail = _email[1];
+  var _password = useState(""); var password = _password[0]; var setPassword = _password[1];
+  var _busy = useState(false); var busy = _busy[0]; var setBusy = _busy[1];
+  var _err = useState(""); var err = _err[0]; var setErr = _err[1];
+  var _info = useState(""); var info = _info[0]; var setInfo = _info[1];
+
+  if (!supabaseConfigured) {
+    return (
+      <div style={{ minHeight: "100vh", background: C.bg, color: C.tx, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--f)" }}>
+        <div style={{ maxWidth: 460, padding: 28, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(212,167,44,0.18)", borderRadius: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", color: C.gold, fontFamily: "var(--m)", marginBottom: 8 }}>SETUP REQUIRED</div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: C.txb, margin: "0 0 12px" }}>Supabase isn't configured yet</h2>
+          <p style={{ fontSize: 13, color: C.tx, lineHeight: 1.55, margin: "0 0 14px" }}>
+            Auth needs two env vars on Vercel before sign-in works:
+          </p>
+          <div style={{ fontFamily: "var(--m)", fontSize: 12, color: C.txb, background: "rgba(0,0,0,0.3)", padding: "12px 14px", borderRadius: 8, marginBottom: 14, lineHeight: 1.7 }}>
+            VITE_SUPABASE_URL<br/>
+            VITE_SUPABASE_ANON_KEY
+          </div>
+          <ol style={{ fontSize: 13, color: C.tx, lineHeight: 1.6, paddingLeft: 18, margin: 0 }}>
+            <li>Create a project at supabase.com</li>
+            <li>Settings → API → copy Project URL + anon key</li>
+            <li>Vercel → smartsolve → Settings → Environment Variables → add both → Redeploy</li>
+          </ol>
+        </div>
+      </div>
+    );
+  }
+
+  var submit = function(e) {
+    e.preventDefault();
+    if (!email || !password) { setErr("Email and password required."); return; }
+    setBusy(true); setErr(""); setInfo("");
+    var fn = mode === "signin" ? supabase.auth.signInWithPassword({ email: email, password: password }) : supabase.auth.signUp({ email: email, password: password });
+    fn.then(function(res) {
+      setBusy(false);
+      if (res.error) { setErr(res.error.message); return; }
+      if (mode === "signup" && res.data && res.data.user && !res.data.session) {
+        setInfo("Check your email to confirm your account, then sign in.");
+        setMode("signin");
+      }
+    }).catch(function(e) { setBusy(false); setErr(e.message || "Auth error."); });
+  };
+
+  var google = function() {
+    setBusy(true); setErr("");
+    supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } })
+      .catch(function(e) { setBusy(false); setErr(e.message || "Google sign-in failed."); });
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.tx, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "var(--f)" }}>
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28, justifyContent: "center" }}>
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: "#1a1c2a", border: "1px solid rgba(212,167,44,0.15)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            <svg width="28" height="28" viewBox="0 0 64 64" fill="none"><rect x="4" y="4" width="56" height="56" rx="10" fill="#1a1c2a"/><rect x="10" y="10" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="23" y="10" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="36" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.8"/><rect x="49" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.35"/><rect x="10" y="23" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="23" y="23" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.65"/></svg>
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: C.txb, letterSpacing: "-0.03em" }}>SmartSolve</div>
+        </div>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: C.txb, letterSpacing: "-0.02em", textAlign: "center", margin: "0 0 6px" }}>{mode === "signin" ? "Sign in" : "Create account"}</h1>
+        <p style={{ fontSize: 13, color: C.txm, textAlign: "center", margin: "0 0 22px" }}>{mode === "signin" ? "Welcome back to SmartSolve." : "Free. Takes 10 seconds."}</p>
+
+        <form onSubmit={submit}>
+          <input type="email" placeholder="Email" value={email} onChange={function(e) { setEmail(e.target.value); }} autoComplete="email" style={{
+            width: "100%", padding: "12px 14px", marginBottom: 10, fontFamily: "var(--f)", fontSize: 14,
+            background: "rgba(255,255,255,0.03)", color: C.txb, border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, outline: "none", boxSizing: "border-box",
+          }} />
+          <input type="password" placeholder="Password" value={password} onChange={function(e) { setPassword(e.target.value); }} autoComplete={mode === "signin" ? "current-password" : "new-password"} style={{
+            width: "100%", padding: "12px 14px", marginBottom: 12, fontFamily: "var(--f)", fontSize: 14,
+            background: "rgba(255,255,255,0.03)", color: C.txb, border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, outline: "none", boxSizing: "border-box",
+          }} />
+          {err && <div style={{ fontSize: 12, color: C.red, marginBottom: 10, fontFamily: "var(--m)" }}>{err}</div>}
+          {info && <div style={{ fontSize: 12, color: C.green, marginBottom: 10, fontFamily: "var(--m)" }}>{info}</div>}
+          <button type="submit" disabled={busy} style={{
+            width: "100%", padding: "12px", fontFamily: "var(--f)", fontSize: 14, fontWeight: 700, color: "#1a1630",
+            background: busy ? "rgba(212,167,44,0.4)" : "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+            border: "none", borderRadius: 8, cursor: busy ? "default" : "pointer",
+            boxShadow: busy ? "none" : "0 4px 14px rgba(212,167,44,0.25)",
+          }}>{busy ? "..." : (mode === "signin" ? "Sign in" : "Create account")}</button>
+        </form>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 0", color: C.txm, fontSize: 11, fontFamily: "var(--m)", letterSpacing: "0.06em" }}>
+          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+          OR
+          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+        </div>
+
+        <button onClick={google} disabled={busy} style={{
+          width: "100%", padding: "11px", fontFamily: "var(--f)", fontSize: 14, fontWeight: 600, color: C.txb,
+          background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 8,
+          cursor: busy ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+        }}>
+          <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3C29.4 35 26.8 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.7 2.1-2 3.9-3.7 5.3l6.3 5.3C39.7 35.5 44 30.3 44 24c0-1.3-.2-2.4-.4-3.5z"/></svg>
+          Continue with Google
+        </button>
+
+        <div style={{ marginTop: 22, textAlign: "center", fontSize: 13, color: C.txm }}>
+          {mode === "signin" ? "Don't have an account? " : "Already have an account? "}
+          <button onClick={function() { setMode(mode === "signin" ? "signup" : "signin"); setErr(""); setInfo(""); }} style={{
+            color: C.gold, background: "none", border: "none", cursor: "pointer", fontFamily: "var(--f)", fontSize: 13, fontWeight: 600, padding: 0,
+          }}>{mode === "signin" ? "Sign up" : "Sign in"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function useAuth() {
+  var _user = useState(null); var user = _user[0]; var setUser = _user[1];
+  var _loading = useState(true); var loading = _loading[0]; var setLoading = _loading[1];
+
+  useEffect(function() {
+    if (!supabaseConfigured) { setLoading(false); return; }
+    supabase.auth.getSession().then(function(res) {
+      setUser(res.data.session ? res.data.session.user : null);
+      setLoading(false);
+    });
+    var sub = supabase.auth.onAuthStateChange(function(_event, session) {
+      setUser(session ? session.user : null);
+    });
+    return function() { if (sub && sub.data && sub.data.subscription) sub.data.subscription.unsubscribe(); };
+  }, []);
+
+  return { user: user, loading: loading };
+}
+
 export default function App() {
+  var auth = useAuth();
   var _pg = useState("home"); var pg = _pg[0]; var setPg = _pg[1];
   var _hist = useState([]); var hist = _hist[0]; var setHist = _hist[1];
   var _menu = useState(false); var menu = _menu[0]; var setMenu = _menu[1];
   var _viewHand = useState(null); var viewHand = _viewHand[0]; var setViewHand = _viewHand[1];
+
+  if (auth.loading) {
+    return <div style={{ minHeight: "100vh", background: C.bg, color: C.txm, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--m)", fontSize: 12, letterSpacing: "0.08em" }}>LOADING...</div>;
+  }
+  if (!auth.user) {
+    return <SignInGate />;
+  }
+  var signOut = function() { if (supabase) supabase.auth.signOut(); };
 
   var addH = function(d) { if (d && d.hero_cards) setHist(function(h) { return [d].concat(h).slice(0, 50); }); };
   var go = function(id) { setPg(id); setMenu(false); };
@@ -3070,6 +3208,11 @@ export default function App() {
             padding: "6px 10px", cursor: "pointer", whiteSpace: "nowrap",
           }}>{"\u00B7\u00B7\u00B7"}</button>
         </div>
+        <button onClick={signOut} title={auth.user && auth.user.email ? auth.user.email : "Sign out"} style={{
+          fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", color: C.txm,
+          background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6,
+          padding: "5px 10px", cursor: "pointer", marginLeft: 8, flexShrink: 0, whiteSpace: "nowrap",
+        }}>SIGN OUT</button>
       </div>
 
       {menu && (
