@@ -3288,10 +3288,10 @@ function LandingPage(props) {
           <div className="nav-links">
             <a href="#features">Features</a>
             <a href="#compare">Compare</a>
-            <a href="#pricing">Pricing</a>
+            <a href="#pricing">Get Started</a>
             <a href="#faq">FAQ</a>
           </div>
-          <a href="#pricing" className="nav-cta" onClick={goSignIn}>Start Free Trial</a>
+          <a href="#pricing" className="nav-cta" onClick={goSignIn}>Sign Up Free</a>
         </div>
       </nav>
 
@@ -3302,7 +3302,7 @@ function LandingPage(props) {
           <p className="lede fu2">SmartSolve reads any screenshot — your cards, the board, every action — and grades each street with EV loss vs the GTO line. No solver setup. No node-locking. Just upload and learn.</p>
           <div className="hero-ctas fu3">
             <a href="#pricing" className="btn-primary" onClick={goSignIn}>
-              Start 7-Day Free Trial
+              Sign Up Free
               <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </a>
             <a href="#features" className="btn-ghost">See it work</a>
@@ -3505,10 +3505,10 @@ function LandingPage(props) {
               <div className="compare-cell"><span className="yes">✓</span></div>
             </div>
             <div className="compare-row">
-              <div className="compare-feat">Monthly cost</div>
-              <div className="compare-cell me"><span className="yes">$19.99</span></div>
-              <div className="compare-cell"><span className="no">$475 once</span></div>
-              <div className="compare-cell"><span className="no">$59</span></div>
+              <div className="compare-feat">Free to try, no card required</div>
+              <div className="compare-cell me"><span className="yes">✓</span></div>
+              <div className="compare-cell"><span className="no">—</span></div>
+              <div className="compare-cell"><span className="no">—</span></div>
             </div>
           </div>
         </div>
@@ -3520,7 +3520,7 @@ function LandingPage(props) {
           <div className="trust-card r">
             <h2 className="section-h" style={{ marginBottom: 14 }}>Every chart is <em>solver-verified</em> through our GTO API.</h2>
             <p className="section-d" style={{ marginBottom: 28 }}>
-              SmartSolve runs on a proprietary GTO API — pre-computed solver solutions served on demand. Every range, frequency, and EV figure you see is a direct query against that API. No guesswork, no improvisation: just the same solver math the pros pay $475 for, served instantly.
+              SmartSolve runs on a proprietary GTO API — pre-computed solver solutions served on demand. Every range, frequency, and EV figure you see is a direct query against that API. No guesswork, no improvisation: pro-grade solver math, served instantly.
             </p>
             <div className="trust-grid">
               <div className="trust-item">
@@ -3543,28 +3543,28 @@ function LandingPage(props) {
         </div>
       </section>
 
-      {/* PRICING */}
+      {/* SIGN UP */}
       <section id="pricing">
         <div className="wrap">
           <div className="r" style={{ textAlign: "center" }}>
-            <div className="section-eyebrow">Pricing</div>
-            <h2 className="section-h" style={{ margin: "0 auto 18px" }}>One plan. <em>Everything in.</em></h2>
-            <p className="section-d" style={{ margin: "0 auto 60px" }}>7-day free trial. No card required to start. Cancel any time, no questions.</p>
+            <div className="section-eyebrow">Get Started</div>
+            <h2 className="section-h" style={{ margin: "0 auto 18px" }}>Sign up and <em>try for free.</em></h2>
+            <p className="section-d" style={{ margin: "0 auto 60px" }}>No card. No commitment. Make an account and start uploading hands in under a minute.</p>
           </div>
 
           <div className="pricing-wrap r">
-            <div className="price-tag">SmartSolve Pro</div>
-            <div className="price-amt">$19.99<sub> /mo</sub></div>
-            <div className="price-sub">After 7-day free trial</div>
+            <div className="price-tag">Free Access</div>
+            <div className="price-amt" style={{ fontSize: 48 }}>Sign up &amp; try</div>
+            <div className="price-sub">Full access — every feature unlocked from day one.</div>
             <ul className="price-feats">
-              <li>Unlimited screenshot analyses</li>
-              <li>All 46 GTO charts unlocked</li>
+              <li>Screenshot analysis</li>
+              <li>All 46 GTO charts</li>
               <li>Live trainer with EV tracking</li>
               <li>Custom solver (text + voice)</li>
               <li>Equity calculator</li>
               <li>Bankroll + session history</li>
             </ul>
-            <a href="#" className="price-cta" onClick={goSignIn}>Start 7-Day Free Trial</a>
+            <a href="#" className="price-cta" onClick={goSignIn}>Sign Up Free</a>
           </div>
         </div>
       </section>
@@ -3592,8 +3592,8 @@ function LandingPage(props) {
               <div className="faq-a">Currently 6-max, 100bb. 9-max and tournament stack depths are on the roadmap.</div>
             </div>
             <div className="faq-item">
-              <div className="faq-q">Can I cancel anytime?</div>
-              <div className="faq-a">Yep. One click in your account settings. You won't be charged after cancellation, and your data sticks around in case you come back.</div>
+              <div className="faq-q">Is it really free to sign up?</div>
+              <div className="faq-a">Yes. Make an account and you're in — no card, no trial countdown, no upsell wall in the middle of a hand review. Your data sticks around whether you come back tomorrow or in six months.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">Is this allowed on poker sites?</div>
