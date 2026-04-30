@@ -3445,7 +3445,7 @@ function LandingPage(props) {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 00-3 3v0a3 3 0 003 3h0a3 3 0 003-3v0a3 3 0 00-3-3zM5 22v-6a3 3 0 013-3h8a3 3 0 013 3v6"/><path d="M9 14l3 3 3-3"/></svg>
               </div>
               <h3>Custom Solver</h3>
-              <p>Describe any spot in text or voice. AI returns GTO frequencies + reasoning. Built for the weird river spots no chart covers.</p>
+              <p>Describe any spot in text or voice. Our GTO API returns the solver-verified frequencies plus the reasoning behind them — built for the off-tree river spots no chart covers.</p>
             </div>
 
             <div className="tile t-third r">
