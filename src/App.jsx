@@ -3464,7 +3464,7 @@ function LandingPage(props) {
           <div className="r">
             <div className="section-eyebrow">Why players choose us</div>
             <h2 className="section-h">Who <em>chose us.</em></h2>
-            <p className="section-d">Cash grinders, tournament regs, and weekend players — all on one plan. See exactly what you get with SmartSolve compared to the alternatives.</p>
+            <p className="section-d">Not only do we deliver every chart, frequency, and EV figure through our solver-verified GTO API — we're reinventing what a poker solver looks like. Instant. Visual. Built for how players actually study.</p>
           </div>
 
           <div className="compare r">
