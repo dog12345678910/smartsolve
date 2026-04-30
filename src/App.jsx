@@ -3643,9 +3643,14 @@ function SignInGate(props) {
 
   var submit = function(e) {
     e.preventDefault();
-    if (!email || !password) { setErr("Email and password required."); return; }
+    var em = (email || "").trim().toLowerCase();
+    var pw = password || "";
+    if (!em || !pw) { setErr("Email and password required."); return; }
+    if (mode === "signup" && pw.length < 6) { setErr("Password must be at least 6 characters."); return; }
     setBusy(true); setErr(""); setInfo("");
-    var fn = mode === "signin" ? supabase.auth.signInWithPassword({ email: email, password: password }) : supabase.auth.signUp({ email: email, password: password });
+    var fn = mode === "signin"
+      ? supabase.auth.signInWithPassword({ email: em, password: pw })
+      : supabase.auth.signUp({ email: em, password: pw, options: { emailRedirectTo: window.location.origin } });
     fn.then(function(res) {
       setBusy(false);
       if (res.error) { setErr(res.error.message); return; }
@@ -3653,13 +3658,14 @@ function SignInGate(props) {
         setInfo("Check your email to confirm your account, then sign in.");
         setMode("signin");
       }
-    }).catch(function(e) { setBusy(false); setErr(e.message || "Auth error."); });
+    }).catch(function(e) { setBusy(false); setErr((e && e.message) || "Auth error. Try again."); });
   };
 
   var google = function() {
     setBusy(true); setErr("");
     supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } })
-      .catch(function(e) { setBusy(false); setErr(e.message || "Google sign-in failed."); });
+      .then(function(res) { if (res && res.error) { setBusy(false); setErr(res.error.message); } })
+      .catch(function(e) { setBusy(false); setErr((e && e.message) || "Google sign-in failed."); });
   };
 
   return (
@@ -3683,7 +3689,7 @@ function SignInGate(props) {
           <div style={{ fontSize: 20, fontWeight: 700, color: C.txb, letterSpacing: "-0.03em" }}>SmartSolve</div>
         </div>
         <h1 style={{ fontSize: 24, fontWeight: 700, color: C.txb, letterSpacing: "-0.02em", textAlign: "center", margin: "0 0 6px" }}>{mode === "signin" ? "Sign in" : "Create account"}</h1>
-        <p style={{ fontSize: 13, color: C.txm, textAlign: "center", margin: "0 0 22px" }}>{mode === "signin" ? "Welcome back to SmartSolve." : "Free. Takes 10 seconds."}</p>
+        <p style={{ fontSize: 13, color: C.txm, textAlign: "center", margin: "0 0 22px" }}>{mode === "signin" ? "Welcome back to SmartSolve." : "Free to sign up. No card required."}</p>
 
         <form onSubmit={submit}>
           <input type="email" placeholder="Email" value={email} onChange={function(e) { setEmail(e.target.value); }} autoComplete="email" style={{
