@@ -3298,7 +3298,6 @@ function LandingPage(props) {
       {/* HERO */}
       <section className="hero">
         <div>
-          <div className="hero-eyebrow fu">AI Poker Coach · Now Live</div>
           <h1 className="fu1">Drop a hand. Get a <em>solver-grade</em> read in 6 seconds.</h1>
           <p className="lede fu2">SmartSolve reads any screenshot — your cards, the board, every action — and grades each street with EV loss vs the GTO line. No solver setup. No node-locking. Just upload and learn.</p>
           <div className="hero-ctas fu3">
