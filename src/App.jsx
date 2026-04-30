@@ -3462,8 +3462,8 @@ function LandingPage(props) {
       <section id="compare">
         <div className="wrap">
           <div className="r">
-            <div className="section-eyebrow">Why players choose us</div>
-            <h2 className="section-h">Who <em>chose us.</em></h2>
+            <div className="section-eyebrow">Why choose us</div>
+            <h2 className="section-h">Why <em>choose us.</em></h2>
             <p className="section-d">Not only do we deliver every chart, frequency, and EV figure through our solver-verified GTO API — we're reinventing what a poker solver looks like. Instant. Visual. Built for how players actually study.</p>
           </div>
 
