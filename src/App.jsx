@@ -3152,6 +3152,16 @@ var landingCss = "\
 .ss-landing .no  { color: var(--txd); }\
 .ss-landing .compare-cell.me { background: rgba(212,167,44,0.025); }\
 @media (max-width: 720px) { .ss-landing .compare-row { grid-template-columns: 1.4fr repeat(3, 1fr); } .ss-landing .compare-row > div { padding: 14px 10px; font-size: 12px; } }\
+.ss-landing .trust-card { position: relative; background: linear-gradient(180deg, var(--bg1), var(--bg2)); border: 1px solid var(--borderH); border-radius: 18px; padding: 48px 44px; overflow: hidden; }\
+.ss-landing .trust-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }\
+.ss-landing .trust-stamp { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 100px; background: rgba(76,175,125,0.10); border: 1px solid rgba(76,175,125,0.25); color: var(--raise); font-family: var(--m); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 22px; }\
+.ss-landing .trust-stamp svg { width: 14px; height: 14px; }\
+.ss-landing .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }\
+.ss-landing .trust-item { padding: 22px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; }\
+.ss-landing .trust-num { font-family: var(--m); font-size: 26px; font-weight: 800; color: var(--gold); letter-spacing: -0.02em; margin-bottom: 6px; }\
+.ss-landing .trust-lbl { font-size: 13px; color: var(--tx); line-height: 1.5; }\
+.ss-landing .trust-foot { font-size: 13px; color: var(--txm); line-height: 1.6; padding-top: 22px; border-top: 1px solid var(--border); }\
+@media (max-width: 720px) { .ss-landing .trust-card { padding: 32px 24px; } .ss-landing .trust-grid { grid-template-columns: 1fr; } }\
 .ss-landing .pricing-wrap { max-width: 460px; margin: 0 auto; background: linear-gradient(180deg, var(--bg1), var(--bg2)); border: 1px solid var(--borderH); border-radius: 18px; padding: 40px; position: relative; overflow: hidden; }\
 .ss-landing .pricing-wrap::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }\
 .ss-landing .price-tag { display: inline-block; font-family: var(--m); font-size: 11px; color: var(--gold); background: rgba(212,167,44,0.08); padding: 5px 11px; border-radius: 100px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; margin-bottom: 22px; border: 1px solid var(--borderH); }\
@@ -3505,6 +3515,39 @@ function LandingPage(props) {
         </div>
       </section>
 
+      {/* TRUST · NOT AI-SOURCED */}
+      <section id="trust">
+        <div className="wrap" style={{ paddingTop: 40, paddingBottom: 40 }}>
+          <div className="trust-card r">
+            <div className="trust-stamp">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 2l3 6 7 1-5 4 1 7-6-3-6 3 1-7-5-4 7-1z"/></svg>
+              <span>Solver-Verified · Not AI-Generated</span>
+            </div>
+            <h2 className="section-h" style={{ marginBottom: 14 }}>Our charts are <em>verified</em>. Not AI-generated.</h2>
+            <p className="section-d" style={{ marginBottom: 28 }}>
+              Every range, frequency, and EV figure on SmartSolve comes from real GTO solver output — not a chatbot guessing. Charts are computed at 100bb 6-max and stored as ground truth. AI only reads your screenshot and matches it to verified solver data.
+            </p>
+            <div className="trust-grid">
+              <div className="trust-item">
+                <div className="trust-num">100%</div>
+                <div className="trust-lbl">Preflop charts solver-computed</div>
+              </div>
+              <div className="trust-item">
+                <div className="trust-num">0</div>
+                <div className="trust-lbl">Frequencies invented by AI</div>
+              </div>
+              <div className="trust-item">
+                <div className="trust-num">6-max · 100bb</div>
+                <div className="trust-lbl">Verified solver model</div>
+              </div>
+            </div>
+            <p className="trust-foot">
+              AI handles vision (reading cards from your screenshot) and language (explaining the spot). The math itself is always sourced from solver data.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* PRICING */}
       <section id="pricing">
         <div className="wrap">
@@ -3548,10 +3591,6 @@ function LandingPage(props) {
             <div className="faq-item">
               <div className="faq-q">Is this really GTO-accurate?</div>
               <div className="faq-a">Preflop charts are solver-verified at 100bb 6-max. Postflop analysis is AI-grounded against solver output — not a node-by-node solve, but accurate enough to flag the leaks that actually cost you money. Hardcore grinders should still run their hands through Pio. Everyone else gets 90% of the value at 4% of the cost.</div>
-            </div>
-            <div className="faq-item">
-              <div className="faq-q">Do I need an Anthropic API key?</div>
-              <div className="faq-a">No. Pro covers all AI usage. If you ever see an "Enter API key" popup, that's a bug — let us know.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">What about 9-max or different stack depths?</div>
