@@ -3593,7 +3593,7 @@ function LandingPage(props) {
             </div>
             <div className="faq-item">
               <div className="faq-q">Is it really free to sign up?</div>
-              <div className="faq-a">Yes. Make an account and you're in — no card, no trial countdown, no upsell wall in the middle of a hand review. Your data sticks around whether you come back tomorrow or in six months.</div>
+              <div className="faq-a">Yes. It's free to sign up — not a trial. Make an account and you're in. No card, no countdown, no upsell wall in the middle of a hand review.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">Is this allowed on poker sites?</div>
