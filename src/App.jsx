@@ -3463,9 +3463,9 @@ function LandingPage(props) {
       <section id="compare">
         <div className="wrap">
           <div className="r">
-            <div className="section-eyebrow">vs The Field</div>
-            <h2 className="section-h">Why not just use <em>a real solver?</em></h2>
-            <p className="section-d">Because PioSOLVER costs $475, has a learning curve like a flight simulator, and doesn't read your screenshots. SmartSolve gives you the answers, not the homework.</p>
+            <div className="section-eyebrow">Why players choose us</div>
+            <h2 className="section-h">Who <em>chose us.</em></h2>
+            <p className="section-d">Players switched from $475 software and $59/mo subscriptions to SmartSolve for one reason: they wanted answers, not homework. Here's how we stack up.</p>
           </div>
 
           <div className="compare r">
