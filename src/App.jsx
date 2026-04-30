@@ -3590,7 +3590,7 @@ function LandingPage(props) {
             </div>
             <div className="faq-item">
               <div className="faq-q">Is this really GTO-accurate?</div>
-              <div className="faq-a">Yes. Every chart is served by our GTO API — pre-computed solver solutions at 100bb 6-max, indexed and queryable in milliseconds. Postflop analysis matches your spot to the closest indexed node and returns the verified frequencies. Hardcore grinders may still want to run custom trees through Pio. Everyone else gets 90% of the value at 4% of the cost.</div>
+              <div className="faq-a">Yes. Every chart, frequency, and EV figure is served by our GTO API — pre-computed solver solutions at 100bb 6-max, indexed and queryable in milliseconds. Your spot maps to the verified solver node and returns the exact frequencies. No approximation, no guessing.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">What about 9-max or different stack depths?</div>
