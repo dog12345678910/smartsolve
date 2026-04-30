@@ -3038,134 +3038,540 @@ function HelpPage() {
 
 /* MAIN APP */
 /* MAIN APP */
+var landingCss = "\
+.ss-landing { --bg: #07080c; --bg1: #0c0d14; --bg2: #11131c; --gold: #d4a72c; --goldL: #e8c34a; --goldD: #b8922a; --raise: #4caf7d; --threebet: #e8c34a; --call: #5b8def; --fold: #d45555; --tx: #b8b4aa; --txb: #eae6dd; --txm: #5a576a; --txd: #2a2935; --f: 'DM Sans', system-ui, sans-serif; --m: 'JetBrains Mono', 'SF Mono', monospace; --border: rgba(255,255,255,0.05); --borderH: rgba(212,167,44,0.18); --glass: rgba(255,255,255,0.018); }\
+.ss-landing, .ss-landing *, .ss-landing *::before, .ss-landing *::after { margin: 0; padding: 0; box-sizing: border-box; }\
+.ss-landing ::selection { background: var(--gold); color: var(--bg); }\
+.ss-landing .atmos { position: fixed; inset: 0; pointer-events: none; z-index: 0; background: radial-gradient(ellipse 800px 500px at 15% 10%, rgba(212,167,44,0.06), transparent 60%), radial-gradient(ellipse 700px 400px at 85% 80%, rgba(91,141,239,0.04), transparent 60%), radial-gradient(ellipse 500px 300px at 50% 50%, rgba(76,175,125,0.025), transparent 70%); }\
+.ss-landing .grain { position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.025; background-image: url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' /%3E%3C/svg%3E\"); }\
+@keyframes ssFadeUp { from { opacity:0; transform: translateY(28px) } to { opacity:1; transform: none } }\
+@keyframes ssPulseGold { 0%,100% { box-shadow: 0 0 0 0 rgba(212,167,44,0.4) } 50% { box-shadow: 0 0 0 14px rgba(212,167,44,0) } }\
+@keyframes ssBlink { 0%,49% { opacity:1 } 50%,100% { opacity:0 } }\
+@keyframes ssFloat { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }\
+.ss-landing .fu  { animation: ssFadeUp .9s ease both; }\
+.ss-landing .fu1 { animation: ssFadeUp .9s .08s ease both; }\
+.ss-landing .fu2 { animation: ssFadeUp .9s .16s ease both; }\
+.ss-landing .fu3 { animation: ssFadeUp .9s .24s ease both; }\
+.ss-landing .fu4 { animation: ssFadeUp .9s .32s ease both; }\
+.ss-landing .fu5 { animation: ssFadeUp .9s .40s ease both; }\
+.ss-landing nav { position: fixed; top:0; left:0; right:0; z-index:50; background: rgba(7,8,12,0.78); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border-bottom: 1px solid var(--border); }\
+.ss-landing .nav-inner { max-width: 1280px; margin: 0 auto; padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; }\
+.ss-landing .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--txb); letter-spacing: -0.01em; }\
+.ss-landing .logo-mark { width: 28px; height: 28px; border-radius: 7px; background: linear-gradient(135deg, var(--gold), var(--goldD)); display: grid; place-items: center; font-family: var(--m); font-weight: 800; color: var(--bg); font-size: 14px; box-shadow: 0 4px 14px rgba(212,167,44,0.25), inset 0 1px 0 rgba(255,255,255,0.2); }\
+.ss-landing .nav-links { display: flex; gap: 32px; align-items: center; }\
+.ss-landing .nav-links a { color: var(--tx); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }\
+.ss-landing .nav-links a:hover { color: var(--txb); }\
+.ss-landing .nav-cta { padding: 9px 18px; border-radius: 8px; background: var(--gold); color: var(--bg); font-weight: 700; font-size: 14px; text-decoration: none; transition: transform .2s, box-shadow .2s; }\
+.ss-landing .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(212,167,44,0.3); }\
+@media (max-width: 768px) { .ss-landing .nav-links { display: none; } .ss-landing .nav-cta { padding: 8px 14px; font-size: 13px; } }\
+.ss-landing .hero { position: relative; padding: 140px 32px 80px; max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 1.05fr 1fr; gap: 64px; align-items: center; z-index: 2; }\
+@media (max-width: 980px) { .ss-landing .hero { grid-template-columns: 1fr; padding-top: 110px; gap: 40px; } }\
+.ss-landing .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 100px; background: rgba(212,167,44,0.08); border: 1px solid var(--borderH); font-family: var(--m); font-size: 11px; font-weight: 600; color: var(--gold); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 22px; }\
+.ss-landing .hero-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--raise); box-shadow: 0 0 8px var(--raise); }\
+.ss-landing .hero h1 { font-size: clamp(40px, 6vw, 68px); line-height: 1.02; font-weight: 800; color: var(--txb); letter-spacing: -0.025em; margin-bottom: 22px; }\
+.ss-landing .hero h1 em { font-style: italic; font-weight: 400; background: linear-gradient(110deg, var(--goldL) 0%, var(--gold) 50%, var(--goldD) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }\
+.ss-landing .hero p.lede { font-size: 18px; line-height: 1.55; color: var(--tx); max-width: 540px; margin-bottom: 32px; }\
+.ss-landing .hero-ctas { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 36px; }\
+.ss-landing .btn-primary { padding: 14px 24px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--gold), var(--goldD)); color: var(--bg); font-family: var(--f); font-weight: 700; font-size: 15px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; transition: transform .2s; animation: ssPulseGold 2.4s ease-in-out infinite; }\
+.ss-landing .btn-primary:hover { transform: translateY(-2px); }\
+.ss-landing .btn-primary svg { width: 16px; height: 16px; }\
+.ss-landing .btn-ghost { padding: 14px 22px; border-radius: 10px; background: transparent; border: 1px solid var(--border); color: var(--txb); font-family: var(--f); font-weight: 600; font-size: 15px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: border-color .2s, background .2s; }\
+.ss-landing .btn-ghost:hover { border-color: var(--borderH); background: rgba(212,167,44,0.04); }\
+.ss-landing .hero-sites { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-family: var(--m); font-size: 11px; color: var(--txm); letter-spacing: 0.05em; text-transform: uppercase; }\
+.ss-landing .hero-sites-list { display: flex; gap: 8px; flex-wrap: wrap; }\
+.ss-landing .hero-sites-list span { padding: 4px 9px; border-radius: 5px; background: var(--glass); border: 1px solid var(--border); color: var(--tx); font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 12px; }\
+.ss-landing .hero-preview { position: relative; border-radius: 16px; background: linear-gradient(180deg, var(--bg1), var(--bg2)); border: 1px solid var(--border); box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,167,44,0.04); padding: 24px; overflow: hidden; animation: ssFloat 6s ease-in-out infinite; }\
+.ss-landing .hero-preview::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 60%, rgba(212,167,44,0.04)); pointer-events: none; }\
+.ss-landing .preview-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }\
+.ss-landing .preview-title { font-family: var(--m); font-size: 11px; color: var(--txm); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }\
+.ss-landing .preview-badge { padding: 3px 8px; border-radius: 4px; font-family: var(--m); font-size: 10px; font-weight: 700; background: rgba(212,85,85,0.12); color: var(--fold); border: 1px solid rgba(212,85,85,0.2); }\
+.ss-landing .hand-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }\
+.ss-landing .hand-label { font-family: var(--m); font-size: 11px; color: var(--txm); width: 50px; }\
+.ss-landing .hand-cards { display: flex; gap: 6px; }\
+.ss-landing .card { width: 36px; height: 50px; border-radius: 4px; background: linear-gradient(180deg, #fafafa, #d8d4cb); display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--m); font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 -1px 0 rgba(0,0,0,0.1); }\
+.ss-landing .card.h, .ss-landing .card.d { color: #c0392b; }\
+.ss-landing .card.s, .ss-landing .card.c { color: #1a1a1a; }\
+.ss-landing .card .rank { font-size: 14px; line-height: 1; }\
+.ss-landing .card .suit { font-size: 11px; line-height: 1; margin-top: 1px; }\
+.ss-landing .street-row { display: grid; grid-template-columns: 60px 1fr auto; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }\
+.ss-landing .street-row:last-child { border: none; }\
+.ss-landing .street-name { font-family: var(--m); font-size: 11px; color: var(--txm); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }\
+.ss-landing .street-action { font-size: 13px; color: var(--txb); font-weight: 500; }\
+.ss-landing .verdict { padding: 3px 9px; border-radius: 4px; font-family: var(--m); font-size: 10px; font-weight: 700; letter-spacing: 0.04em; }\
+.ss-landing .v-best { background: rgba(76,175,125,0.14); color: var(--raise); }\
+.ss-landing .v-good { background: rgba(91,141,239,0.14); color: var(--call); }\
+.ss-landing .v-mistake { background: rgba(212,85,85,0.14); color: var(--fold); }\
+.ss-landing .preview-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }\
+.ss-landing .foot-label { font-family: var(--m); font-size: 10px; color: var(--txm); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }\
+.ss-landing .foot-val { font-family: var(--m); font-size: 14px; color: var(--fold); font-weight: 700; }\
+.ss-landing section { position: relative; z-index: 2; }\
+.ss-landing .wrap { max-width: 1280px; margin: 0 auto; padding: 100px 32px; }\
+.ss-landing .section-eyebrow { display: inline-block; font-family: var(--m); font-size: 11px; font-weight: 600; color: var(--gold); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 14px; }\
+.ss-landing .section-h { font-size: clamp(32px, 4.5vw, 48px); font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; color: var(--txb); margin-bottom: 18px; max-width: 720px; }\
+.ss-landing .section-h em { font-style: italic; font-weight: 400; color: var(--gold); }\
+.ss-landing .section-d { font-size: 17px; line-height: 1.55; color: var(--tx); max-width: 600px; margin-bottom: 60px; }\
+.ss-landing .r { opacity: 0; transform: translateY(28px); transition: opacity .8s, transform .8s; }\
+.ss-landing .r.v { opacity: 1; transform: none; }\
+.ss-landing .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }\
+.ss-landing .tile { background: var(--bg1); border: 1px solid var(--border); border-radius: 14px; padding: 28px; position: relative; overflow: hidden; transition: border-color .3s, transform .3s; }\
+.ss-landing .tile:hover { border-color: var(--borderH); transform: translateY(-2px); }\
+.ss-landing .tile-icon { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; background: rgba(212,167,44,0.08); color: var(--gold); margin-bottom: 18px; }\
+.ss-landing .tile-icon svg { width: 18px; height: 18px; }\
+.ss-landing .tile h3 { font-size: 19px; font-weight: 700; color: var(--txb); margin-bottom: 8px; letter-spacing: -0.01em; }\
+.ss-landing .tile p { font-size: 14px; line-height: 1.55; color: var(--tx); }\
+.ss-landing .t-wide { grid-column: span 4; }\
+.ss-landing .t-half { grid-column: span 3; }\
+.ss-landing .t-third { grid-column: span 2; }\
+@media (max-width: 980px) { .ss-landing .bento { grid-template-columns: repeat(2, 1fr); } .ss-landing .t-wide, .ss-landing .t-half, .ss-landing .t-third { grid-column: span 2; } }\
+.ss-landing .matrix-mini { margin-top: 18px; display: grid; grid-template-columns: repeat(13, 1fr); gap: 1.5px; aspect-ratio: 1; max-width: 280px; }\
+.ss-landing .matrix-mini > div { border-radius: 1.5px; aspect-ratio: 1; display: grid; place-items: center; font-family: var(--m); font-size: 7px; font-weight: 700; color: rgba(255,255,255,0.65); }\
+.ss-landing .eq-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }\
+.ss-landing .eq-cards { display: flex; gap: 4px; flex-shrink: 0; }\
+.ss-landing .eq-cards .card { width: 26px; height: 36px; }\
+.ss-landing .eq-cards .card .rank { font-size: 11px; }\
+.ss-landing .eq-cards .card .suit { font-size: 8px; }\
+.ss-landing .eq-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--bg2); overflow: hidden; display: flex; }\
+.ss-landing .eq-bar > div { height: 100%; }\
+.ss-landing .eq-bar .e1 { background: var(--raise); }\
+.ss-landing .eq-bar .e2 { background: var(--fold); }\
+.ss-landing .eq-pct { font-family: var(--m); font-size: 11px; color: var(--txm); width: 38px; text-align: right; }\
+.ss-landing .terminal { margin-top: 18px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-family: var(--m); font-size: 11px; line-height: 1.6; }\
+.ss-landing .terminal .prompt { color: var(--gold); }\
+.ss-landing .terminal .out { color: var(--raise); }\
+.ss-landing .terminal .dim { color: var(--txm); }\
+.ss-landing .terminal .cursor { display: inline-block; width: 6px; height: 11px; background: var(--gold); animation: ssBlink 1s steps(2) infinite; vertical-align: -1px; }\
+.ss-landing .compare { background: var(--bg1); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }\
+.ss-landing .compare-row { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; align-items: center; }\
+.ss-landing .compare-row > div { padding: 18px 24px; font-size: 14px; border-bottom: 1px solid var(--border); }\
+.ss-landing .compare-row:last-child > div { border-bottom: none; }\
+.ss-landing .compare-head > div { font-family: var(--m); font-size: 11px; color: var(--txm); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; background: var(--bg2); }\
+.ss-landing .compare-head .me { color: var(--gold); }\
+.ss-landing .compare-feat { color: var(--txb); font-weight: 500; }\
+.ss-landing .compare-cell { text-align: center; }\
+.ss-landing .yes { color: var(--raise); font-weight: 700; }\
+.ss-landing .no  { color: var(--txd); }\
+.ss-landing .compare-cell.me { background: rgba(212,167,44,0.025); }\
+@media (max-width: 720px) { .ss-landing .compare-row { grid-template-columns: 1.4fr repeat(3, 1fr); } .ss-landing .compare-row > div { padding: 14px 10px; font-size: 12px; } }\
+.ss-landing .pricing-wrap { max-width: 460px; margin: 0 auto; background: linear-gradient(180deg, var(--bg1), var(--bg2)); border: 1px solid var(--borderH); border-radius: 18px; padding: 40px; position: relative; overflow: hidden; }\
+.ss-landing .pricing-wrap::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }\
+.ss-landing .price-tag { display: inline-block; font-family: var(--m); font-size: 11px; color: var(--gold); background: rgba(212,167,44,0.08); padding: 5px 11px; border-radius: 100px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; margin-bottom: 22px; border: 1px solid var(--borderH); }\
+.ss-landing .price-amt { font-size: 64px; font-weight: 800; color: var(--txb); letter-spacing: -0.03em; line-height: 1; margin-bottom: 4px; }\
+.ss-landing .price-amt sub { font-size: 16px; font-weight: 500; color: var(--tx); vertical-align: baseline; }\
+.ss-landing .price-sub { font-size: 14px; color: var(--tx); margin-bottom: 28px; }\
+.ss-landing .price-feats { list-style: none; margin-bottom: 28px; }\
+.ss-landing .price-feats li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--txb); display: flex; align-items: center; gap: 10px; }\
+.ss-landing .price-feats li:last-child { border: none; }\
+.ss-landing .price-feats li::before { content: ''; width: 14px; height: 14px; border-radius: 50%; background: rgba(76,175,125,0.15); flex-shrink: 0; background-image: url(\"data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 12l5 5L20 7' stroke='%234caf7d' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\"); background-size: 10px; background-position: center; background-repeat: no-repeat; }\
+.ss-landing .price-cta { display: block; width: 100%; padding: 16px; background: linear-gradient(135deg, var(--gold), var(--goldD)); color: var(--bg); border: none; border-radius: 10px; font-family: var(--f); font-weight: 700; font-size: 15px; cursor: pointer; text-align: center; text-decoration: none; transition: transform .2s, box-shadow .2s; }\
+.ss-landing .price-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(212,167,44,0.3); }\
+.ss-landing .faq { max-width: 720px; margin: 0 auto; }\
+.ss-landing .faq-item { border-bottom: 1px solid var(--border); }\
+.ss-landing .faq-q { display: flex; justify-content: space-between; align-items: center; padding: 22px 0; cursor: pointer; user-select: none; font-size: 17px; font-weight: 600; color: var(--txb); letter-spacing: -0.01em; }\
+.ss-landing .faq-q::after { content: '+'; font-family: var(--m); font-weight: 400; font-size: 22px; color: var(--gold); transition: transform .3s; }\
+.ss-landing .faq-item.open .faq-q::after { transform: rotate(45deg); }\
+.ss-landing .faq-a { max-height: 0; overflow: hidden; transition: max-height .4s ease, padding .4s; font-size: 15px; line-height: 1.6; color: var(--tx); }\
+.ss-landing .faq-item.open .faq-a { max-height: 280px; padding-bottom: 22px; }\
+.ss-landing footer { border-top: 1px solid var(--border); padding: 40px 32px; text-align: center; font-family: var(--m); font-size: 12px; color: var(--txm); letter-spacing: 0.04em; }\
+.ss-landing footer a { color: var(--tx); text-decoration: none; }\
+.ss-landing footer a:hover { color: var(--gold); }\
+";
+
 function LandingPage(props) {
   var onSignIn = props.onSignIn;
+  var rootRef = useRef(null);
+
+  useEffect(function() {
+    var root = rootRef.current;
+    if (!root) return;
+
+    // Build mini range matrix (BTN RFI ~ 42%)
+    var ranks = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+    var raise = {
+      'AA':1,'KK':1,'QQ':1,'JJ':1,'TT':1,'99':1,'88':1,'77':1,'66':1,'55':1,'44':1,'33':1,'22':1,
+      'AKs':1,'AQs':1,'AJs':1,'ATs':1,'A9s':1,'A8s':1,'A7s':1,'A6s':1,'A5s':1,'A4s':1,'A3s':1,'A2s':1,
+      'KQs':1,'KJs':1,'KTs':1,'K9s':1,'K8s':1,'K7s':1,'K6s':1,'K5s':1,
+      'QJs':1,'QTs':1,'Q9s':1,'Q8s':1,'Q7s':1,
+      'JTs':1,'J9s':1,'J8s':1,'J7s':1,
+      'T9s':1,'T8s':1,'T7s':1,
+      '98s':1,'97s':1,'87s':1,'86s':1,'76s':1,'65s':1,'54s':1,
+      'AKo':1,'AQo':1,'AJo':1,'ATo':1,'A9o':1,'A8o':1,'A7o':1,
+      'KQo':1,'KJo':1,'KTo':1,'K9o':1,
+      'QJo':1,'QTo':1,'Q9o':1,
+      'JTo':1,'J9o':1,
+      'T9o':1
+    };
+    var grid = root.querySelector('#matrixMini');
+    if (grid && grid.childNodes.length === 0) {
+      for (var r = 0; r < 13; r++) {
+        for (var c = 0; c < 13; c++) {
+          var cell = document.createElement('div');
+          var hand;
+          if (r === c) hand = ranks[r] + ranks[r];
+          else if (r < c) hand = ranks[r] + ranks[c] + 's';
+          else hand = ranks[c] + ranks[r] + 'o';
+          var on = !!raise[hand];
+          cell.style.background = on ? 'rgba(76,175,125,0.55)' : 'rgba(212,85,85,0.06)';
+          cell.style.border = '1px solid ' + (on ? 'rgba(76,175,125,0.15)' : 'rgba(212,85,85,0.04)');
+          cell.textContent = hand.replace(/[so]$/, '');
+          cell.style.color = on ? '#fff' : 'rgba(255,255,255,0.1)';
+          grid.appendChild(cell);
+        }
+      }
+    }
+
+    // FAQ accordion
+    var faqHandlers = [];
+    root.querySelectorAll('.faq-q').forEach(function(q) {
+      var handler = function() {
+        var item = q.parentElement;
+        var open = item.classList.contains('open');
+        root.querySelectorAll('.faq-item').forEach(function(i) { i.classList.remove('open'); });
+        if (!open) item.classList.add('open');
+      };
+      q.addEventListener('click', handler);
+      faqHandlers.push([q, handler]);
+    });
+
+    // Smooth-scroll for in-page anchors
+    var scrollHandlers = [];
+    root.querySelectorAll('a[href^="#"]').forEach(function(a) {
+      var handler = function(e) {
+        var href = a.getAttribute('href');
+        if (!href || href === '#') return;
+        var t = root.querySelector(href);
+        if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      };
+      a.addEventListener('click', handler);
+      scrollHandlers.push([a, handler]);
+    });
+
+    // Scroll reveal
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) { e.target.classList.add('v'); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.15 });
+    root.querySelectorAll('.r').forEach(function(el) { obs.observe(el); });
+
+    return function() {
+      faqHandlers.forEach(function(p) { p[0].removeEventListener('click', p[1]); });
+      scrollHandlers.forEach(function(p) { p[0].removeEventListener('click', p[1]); });
+      obs.disconnect();
+    };
+  }, []);
+
+  var goSignIn = function(e) { if (e) e.preventDefault(); onSignIn(); };
+
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, color: C.tx, fontFamily: "var(--f)", overflowX: "hidden" }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <div ref={rootRef} className="ss-landing" style={{ background: "#07080c", color: "#b8b4aa", fontFamily: "'DM Sans', system-ui, sans-serif", overflowX: "hidden", minHeight: "100vh" }}>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+      <style>{landingCss}</style>
+
+      <div className="atmos"></div>
+      <div className="grain"></div>
+
+      <nav>
+        <div className="nav-inner">
+          <div className="logo"><div className="logo-mark">S</div>SmartSolve</div>
+          <div className="nav-links">
+            <a href="#features">Features</a>
+            <a href="#compare">Compare</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
+          </div>
+          <a href="#pricing" className="nav-cta" onClick={goSignIn}>Start Free Trial</a>
+        </div>
+      </nav>
 
       {/* HERO */}
-      <section style={{ position: "relative", padding: "64px 24px 88px", background: "linear-gradient(160deg, #0f1118 0%, #151928 45%, #1a1630 100%)", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -80, right: -60, width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle, rgba(212,167,44,0.10) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", bottom: -100, left: -80, width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle, rgba(91,141,239,0.07) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ position: "relative", maxWidth: 720, margin: "0 auto", textAlign: "center" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 9, background: "#1a1c2a", border: "1px solid rgba(212,167,44,0.18)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-              <svg width="32" height="32" viewBox="0 0 64 64" fill="none"><rect x="4" y="4" width="56" height="56" rx="10" fill="#1a1c2a"/><rect x="10" y="10" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="23" y="10" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="36" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.8"/><rect x="49" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.35"/><rect x="10" y="23" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="23" y="23" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.65"/></svg>
+      <section className="hero">
+        <div>
+          <div className="hero-eyebrow fu">AI Poker Coach · Now Live</div>
+          <h1 className="fu1">Drop a hand. Get a <em>solver-grade</em> read in 6 seconds.</h1>
+          <p className="lede fu2">SmartSolve reads any screenshot — your cards, the board, every action — and grades each street with EV loss vs the GTO line. No solver setup. No node-locking. Just upload and learn.</p>
+          <div className="hero-ctas fu3">
+            <a href="#pricing" className="btn-primary" onClick={goSignIn}>
+              Start 7-Day Free Trial
+              <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </a>
+            <a href="#features" className="btn-ghost">See it work</a>
+          </div>
+          <div className="hero-sites fu4">
+            <span>Reads:</span>
+            <div className="hero-sites-list">
+              <span>PokerStars</span>
+              <span>GG</span>
+              <span>ACR</span>
+              <span>888</span>
+              <span>ClubGG</span>
+              <span>Ignition</span>
+              <span>BetOnline</span>
             </div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: C.txb, letterSpacing: "-0.03em" }}>SmartSolve</div>
-          </div>
-          <h1 style={{ fontSize: 44, fontWeight: 800, color: C.txb, letterSpacing: "-0.04em", lineHeight: 1.05, margin: "0 0 18px" }}>
-            See the right play <span style={{ color: C.gold }}>in seconds.</span>
-          </h1>
-          <p style={{ fontSize: 16, color: C.tx, lineHeight: 1.55, maxWidth: 540, margin: "0 auto 32px", opacity: 0.92 }}>
-            Drop a screenshot from any poker site. Claude reads your cards, board, and action — then grades every street with the GTO line and your EV loss.
-          </p>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginBottom: 30 }}>
-            <button onClick={onSignIn} style={{
-              fontFamily: "var(--f)", fontSize: 14, fontWeight: 700, color: "#1a1630",
-              background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
-              border: "none", borderRadius: 10, padding: "14px 28px", cursor: "pointer",
-              boxShadow: "0 4px 18px rgba(212,167,44,0.28)",
-              display: "inline-flex", alignItems: "center", gap: 8,
-            }}>
-              Get Started Free
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" stroke="#1a1630" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </button>
-            <button onClick={onSignIn} style={{
-              fontFamily: "var(--f)", fontSize: 14, fontWeight: 600, color: C.txb,
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.10)",
-              borderRadius: 10, padding: "14px 24px", cursor: "pointer",
-            }}>Sign in</button>
-          </div>
-          <div style={{ display: "flex", gap: 26, justifyContent: "center", flexWrap: "wrap", fontFamily: "var(--m)" }}>
-            {[["46", "GTO charts"], ["8+", "poker clients"], ["A–F", "hand grading"]].map(function(s) {
-              return (
-                <div key={s[1]} style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: C.txb }}>{s[0]}</div>
-                  <div style={{ fontSize: 10, color: C.txm, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}>{s[1]}</div>
-                </div>
-              );
-            })}
           </div>
         </div>
-      </section>
 
-      {/* HOW IT WORKS */}
-      <section style={{ padding: "56px 24px 24px", maxWidth: 720, margin: "0 auto" }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: C.gold, fontFamily: "var(--m)", marginBottom: 8, textAlign: "center", textTransform: "uppercase" }}>How it works</div>
-        <h2 style={{ fontSize: 26, fontWeight: 700, color: C.txb, textAlign: "center", letterSpacing: "-0.02em", margin: "0 0 28px" }}>From hand to fix in three steps.</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10 }}>
-          {[
-            { n: "01", t: "Upload", d: "Screenshot any hand from ClubWPT Gold, PokerStars, GG, ACR, 888, ClubGG. Drag, drop, done.", c: C.amber },
-            { n: "02", t: "Analyze", d: "Claude reads your cards, the board, and every action. Get GTO frequencies, EV loss, and a verdict for each street.", c: C.gold },
-            { n: "03", t: "Improve", d: "Drill against real GTO ranges in the Trainer. Track accuracy, streaks, and the bb you're leaving on the table.", c: C.green },
-          ].map(function(s) {
-            return (
-              <div key={s.n} style={{ display: "flex", gap: 16, padding: 18, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 14 }}>
-                <div style={{ flexShrink: 0, width: 48, height: 48, borderRadius: 12, background: s.c + "14", border: "1px solid " + s.c + "30", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--m)", fontWeight: 800, fontSize: 14, color: s.c }}>{s.n}</div>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.txb, marginBottom: 4 }}>{s.t}</div>
-                  <div style={{ fontSize: 13, color: C.txm, lineHeight: 1.55 }}>{s.d}</div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="hero-preview fu5">
+          <div className="preview-head">
+            <div className="preview-title">Hand · Analysis</div>
+            <div className="preview-badge">EV −2.4bb</div>
+          </div>
+          <div className="hand-row">
+            <div className="hand-label">Hero</div>
+            <div className="hand-cards">
+              <div className="card s"><div className="rank">A</div><div className="suit">♠</div></div>
+              <div className="card h"><div className="rank">K</div><div className="suit">♥</div></div>
+            </div>
+            <div style={{ fontFamily: "var(--m)", fontSize: 11, color: "var(--txm)", marginLeft: 8 }}>CO · 100bb</div>
+          </div>
+          <div className="hand-row">
+            <div className="hand-label">Board</div>
+            <div className="hand-cards">
+              <div className="card d"><div className="rank">Q</div><div className="suit">♦</div></div>
+              <div className="card s"><div className="rank">J</div><div className="suit">♠</div></div>
+              <div className="card c"><div className="rank">7</div><div className="suit">♣</div></div>
+              <div className="card h"><div className="rank">2</div><div className="suit">♥</div></div>
+            </div>
+          </div>
+          <div style={{ height: 1, background: "var(--border)", margin: "20px 0" }}></div>
+          <div className="street-row">
+            <div className="street-name">Pre</div>
+            <div className="street-action">Open 2.5x · BB called</div>
+            <div className="verdict v-best">BEST</div>
+          </div>
+          <div className="street-row">
+            <div className="street-name">Flop</div>
+            <div className="street-action">Bet 33% · BB called</div>
+            <div className="verdict v-good">GOOD</div>
+          </div>
+          <div className="street-row">
+            <div className="street-name">Turn</div>
+            <div className="street-action">Checked back · should bet 75%</div>
+            <div className="verdict v-mistake">MISTAKE</div>
+          </div>
+          <div className="preview-foot">
+            <span className="foot-label">EV Loss · Turn</span>
+            <span className="foot-val">−2.4bb</span>
+          </div>
         </div>
       </section>
 
       {/* FEATURES */}
-      <section style={{ padding: "32px 24px 24px", maxWidth: 720, margin: "0 auto" }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: C.gold, fontFamily: "var(--m)", marginBottom: 8, textAlign: "center", textTransform: "uppercase" }}>What's inside</div>
-        <h2 style={{ fontSize: 26, fontWeight: 700, color: C.txb, textAlign: "center", letterSpacing: "-0.02em", margin: "0 0 28px" }}>A poker lab in your pocket.</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          {[
-            { t: "AI Hand Analysis", d: "Claude grades every street with EV loss and verdicts.", c: C.gold },
-            { t: "GTO Trainer", d: "Quiz drills with timed mode, streaks, and live accuracy.", c: C.green },
-            { t: "46 GTO Charts", d: "RFI, vs Open, vs 3-Bet, vs 4-Bet across every position.", c: C.blue },
-            { t: "Solve Any Spot", d: "Describe a hand in text or voice — get GTO frequencies.", c: C.amber },
-          ].map(function(f) {
-            return (
-              <div key={f.t} style={{ padding: 18, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 14 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: f.c + "14", border: "1px solid " + f.c + "28", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: f.c }} />
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: C.txb, marginBottom: 5 }}>{f.t}</div>
-                <div style={{ fontSize: 12, color: C.txm, lineHeight: 1.5 }}>{f.d}</div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      <section id="features">
+        <div className="wrap">
+          <div className="r">
+            <div className="section-eyebrow">Features</div>
+            <h2 className="section-h">Six tools. <em>One workflow.</em></h2>
+            <p className="section-d">Upload a hand, drill ranges, study charts, calculate equity. Everything you need to fix leaks without leaving the browser.</p>
+          </div>
 
-      {/* TRUST STRIP */}
-      <section style={{ padding: "24px 24px 0", maxWidth: 720, margin: "0 auto" }}>
-        <div style={{ padding: "16px 18px", background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 12, textAlign: "center" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", color: C.txm, fontFamily: "var(--m)", marginBottom: 8, textTransform: "uppercase" }}>Reads screenshots from</div>
-          <div style={{ fontSize: 13, color: C.tx, lineHeight: 1.6, fontFamily: "var(--m)" }}>
-            ClubWPT Gold · PokerStars · GGPoker · ACR · 888 · ClubGG · Ignition · BetOnline
+          <div className="bento">
+            <div className="tile t-wide r">
+              <div className="tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              </div>
+              <h3>Screenshot Analysis</h3>
+              <p style={{ marginBottom: 8 }}>Drop a screenshot from any major site. AI extracts your cards, the board, every bet, and grades each street with an EV-loss verdict — Best, Good, Inaccuracy, Mistake, or Blunder.</p>
+              <div className="terminal">
+                <div><span className="prompt">$</span> upload hand_3284.png</div>
+                <div className="dim">› Parsing cards, board, action history…</div>
+                <div className="dim">› Cross-referencing GTO solution…</div>
+                <div className="out">✓ AKs · CO vs BB · 100bb</div>
+                <div className="out">✓ Pre BEST · Flop GOOD · Turn MISTAKE −2.4bb</div>
+                <div><span className="prompt">$</span> <span className="cursor"></span></div>
+              </div>
+            </div>
+
+            <div className="tile t-third r">
+              <div className="tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              </div>
+              <h3>Live Trainer</h3>
+              <p>Random hands, random spots. Pick raise / call / fold. Streak counter, accuracy %, total EV lost — all tracked in real time.</p>
+            </div>
+
+            <div className="tile t-half r">
+              <div className="tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              </div>
+              <h3>46 GTO Charts</h3>
+              <p>RFI, vs Open, vs 3-Bet, vs 4-Bet — every position. Action-colored ranges you can read at a glance.</p>
+              <div className="matrix-mini" id="matrixMini"></div>
+            </div>
+
+            <div className="tile t-third r">
+              <div className="tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3v18h18M9 17V9M15 17V13"/></svg>
+              </div>
+              <h3>Equity Calc</h3>
+              <p>Monte Carlo · 50,000 sims. Click cards, see equity instantly.</p>
+              <div className="eq-row">
+                <div className="eq-cards">
+                  <div className="card s"><div className="rank">A</div><div className="suit">♠</div></div>
+                  <div className="card h"><div className="rank">K</div><div className="suit">♥</div></div>
+                </div>
+                <div className="eq-bar">
+                  <div className="e1" style={{ flex: 0.46 }}></div>
+                  <div className="e2" style={{ flex: 0.54 }}></div>
+                </div>
+                <div className="eq-pct">46.2%</div>
+              </div>
+              <div className="eq-row">
+                <div className="eq-cards">
+                  <div className="card d"><div className="rank">Q</div><div className="suit">♦</div></div>
+                  <div className="card c"><div className="rank">Q</div><div className="suit">♣</div></div>
+                </div>
+                <div className="eq-bar">
+                  <div className="e1" style={{ flex: 0.54 }}></div>
+                  <div className="e2" style={{ flex: 0.46 }}></div>
+                </div>
+                <div className="eq-pct">53.8%</div>
+              </div>
+            </div>
+
+            <div className="tile t-third r">
+              <div className="tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 00-3 3v0a3 3 0 003 3h0a3 3 0 003-3v0a3 3 0 00-3-3zM5 22v-6a3 3 0 013-3h8a3 3 0 013 3v6"/><path d="M9 14l3 3 3-3"/></svg>
+              </div>
+              <h3>Custom Solver</h3>
+              <p>Describe any spot in text or voice. AI returns GTO frequencies + reasoning. Built for the weird river spots no chart covers.</p>
+            </div>
+
+            <div className="tile t-third r">
+              <div className="tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+              </div>
+              <h3>Bankroll Tracker</h3>
+              <p>Log sessions, watch the curve. Profit chart, hourly rate, win-rate — without a spreadsheet.</p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* FINAL CTA */}
-      <section style={{ padding: "40px 24px 24px", maxWidth: 720, margin: "0 auto" }}>
-        <div style={{ position: "relative", overflow: "hidden", padding: "36px 28px", background: "linear-gradient(135deg, rgba(212,167,44,0.10), rgba(91,141,239,0.06))", border: "1px solid rgba(212,167,44,0.20)", borderRadius: 16, textAlign: "center" }}>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.txb, margin: "0 0 8px", letterSpacing: "-0.02em" }}>Ready to stop guessing?</h2>
-          <p style={{ fontSize: 14, color: C.tx, margin: "0 auto 22px", maxWidth: 380, opacity: 0.9, lineHeight: 1.5 }}>Free while in beta. Takes 10 seconds to sign up.</p>
-          <button onClick={onSignIn} style={{
-            fontFamily: "var(--f)", fontSize: 14, fontWeight: 700, color: "#1a1630",
-            background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
-            border: "none", borderRadius: 10, padding: "14px 30px", cursor: "pointer",
-            boxShadow: "0 4px 18px rgba(212,167,44,0.28)",
-          }}>Sign in to start</button>
+      {/* COMPARE */}
+      <section id="compare">
+        <div className="wrap">
+          <div className="r">
+            <div className="section-eyebrow">vs The Field</div>
+            <h2 className="section-h">Why not just use <em>a real solver?</em></h2>
+            <p className="section-d">Because PioSOLVER costs $475, has a learning curve like a flight simulator, and doesn't read your screenshots. SmartSolve gives you the answers, not the homework.</p>
+          </div>
+
+          <div className="compare r">
+            <div className="compare-row compare-head">
+              <div>Feature</div>
+              <div className="compare-cell me">SmartSolve</div>
+              <div className="compare-cell">PioSOLVER</div>
+              <div className="compare-cell">GTO Wizard</div>
+            </div>
+            <div className="compare-row">
+              <div className="compare-feat">Upload screenshots → instant analysis</div>
+              <div className="compare-cell me"><span className="yes">✓</span></div>
+              <div className="compare-cell"><span className="no">—</span></div>
+              <div className="compare-cell"><span className="no">—</span></div>
+            </div>
+            <div className="compare-row">
+              <div className="compare-feat">EV-loss verdict per street</div>
+              <div className="compare-cell me"><span className="yes">✓</span></div>
+              <div className="compare-cell"><span className="yes">✓</span></div>
+              <div className="compare-cell"><span className="yes">✓</span></div>
+            </div>
+            <div className="compare-row">
+              <div className="compare-feat">Custom spots in plain English</div>
+              <div className="compare-cell me"><span className="yes">✓</span></div>
+              <div className="compare-cell"><span className="no">—</span></div>
+              <div className="compare-cell"><span className="no">—</span></div>
+            </div>
+            <div className="compare-row">
+              <div className="compare-feat">Built-in equity calculator</div>
+              <div className="compare-cell me"><span className="yes">✓</span></div>
+              <div className="compare-cell"><span className="yes">✓</span></div>
+              <div className="compare-cell"><span className="yes">✓</span></div>
+            </div>
+            <div className="compare-row">
+              <div className="compare-feat">No download. Works in browser.</div>
+              <div className="compare-cell me"><span className="yes">✓</span></div>
+              <div className="compare-cell"><span className="no">—</span></div>
+              <div className="compare-cell"><span className="yes">✓</span></div>
+            </div>
+            <div className="compare-row">
+              <div className="compare-feat">Monthly cost</div>
+              <div className="compare-cell me"><span className="yes">$19.99</span></div>
+              <div className="compare-cell"><span className="no">$475 once</span></div>
+              <div className="compare-cell"><span className="no">$59</span></div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <div style={{ padding: "16px 24px 32px", textAlign: "center", fontFamily: "var(--m)", fontSize: 11, color: C.txm, opacity: 0.6 }}>
-        SmartSolve · GTO Poker Trainer
-      </div>
+      {/* PRICING */}
+      <section id="pricing">
+        <div className="wrap">
+          <div className="r" style={{ textAlign: "center" }}>
+            <div className="section-eyebrow">Pricing</div>
+            <h2 className="section-h" style={{ margin: "0 auto 18px" }}>One plan. <em>Everything in.</em></h2>
+            <p className="section-d" style={{ margin: "0 auto 60px" }}>7-day free trial. No card required to start. Cancel any time, no questions.</p>
+          </div>
+
+          <div className="pricing-wrap r">
+            <div className="price-tag">SmartSolve Pro</div>
+            <div className="price-amt">$19.99<sub> /mo</sub></div>
+            <div className="price-sub">After 7-day free trial</div>
+            <ul className="price-feats">
+              <li>Unlimited screenshot analyses</li>
+              <li>All 46 GTO charts unlocked</li>
+              <li>Live trainer with EV tracking</li>
+              <li>Custom solver (text + voice)</li>
+              <li>Equity calculator</li>
+              <li>Bankroll + session history</li>
+            </ul>
+            <a href="#" className="price-cta" onClick={goSignIn}>Start 7-Day Free Trial</a>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq">
+        <div className="wrap">
+          <div className="r" style={{ textAlign: "center" }}>
+            <div className="section-eyebrow">FAQ</div>
+            <h2 className="section-h" style={{ margin: "0 auto 18px" }}>Honest answers.</h2>
+            <p className="section-d" style={{ margin: "0 auto 60px" }}>If something's missing, email and ask.</p>
+          </div>
+
+          <div className="faq r">
+            <div className="faq-item">
+              <div className="faq-q">Which sites can SmartSolve read screenshots from?</div>
+              <div className="faq-a">PokerStars, GG, ACR, 888, ClubGG, Ignition, and BetOnline are all supported. If your site uses a fairly standard layout, SmartSolve probably works on it. If a screenshot fails, send it and we'll fix the parser.</div>
+            </div>
+            <div className="faq-item">
+              <div className="faq-q">Is this really GTO-accurate?</div>
+              <div className="faq-a">Preflop charts are solver-verified at 100bb 6-max. Postflop analysis is AI-grounded against solver output — not a node-by-node solve, but accurate enough to flag the leaks that actually cost you money. Hardcore grinders should still run their hands through Pio. Everyone else gets 90% of the value at 4% of the cost.</div>
+            </div>
+            <div className="faq-item">
+              <div className="faq-q">Do I need an Anthropic API key?</div>
+              <div className="faq-a">No. Pro covers all AI usage. If you ever see an "Enter API key" popup, that's a bug — let us know.</div>
+            </div>
+            <div className="faq-item">
+              <div className="faq-q">What about 9-max or different stack depths?</div>
+              <div className="faq-a">Currently 6-max, 100bb. 9-max and tournament stack depths are on the roadmap.</div>
+            </div>
+            <div className="faq-item">
+              <div className="faq-q">Can I cancel anytime?</div>
+              <div className="faq-a">Yep. One click in your account settings. You won't be charged after cancellation, and your data sticks around in case you come back.</div>
+            </div>
+            <div className="faq-item">
+              <div className="faq-q">Is this allowed on poker sites?</div>
+              <div className="faq-a">SmartSolve is a study tool — you upload screenshots after a hand to review what happened. It doesn't run while you play, doesn't read the table in real time, and doesn't violate any major site's ToS. Same category as PioSOLVER or GTO Wizard, just smarter.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        © 2026 SmartSolve · <a href="mailto:hello@smartsolvepoker.com">hello@smartsolvepoker.com</a> · <a href="#">Terms</a> · <a href="#">Privacy</a>
+      </footer>
     </div>
   );
 }
