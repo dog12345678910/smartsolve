@@ -3519,10 +3519,6 @@ function LandingPage(props) {
       <section id="trust">
         <div className="wrap" style={{ paddingTop: 40, paddingBottom: 40 }}>
           <div className="trust-card r">
-            <div className="trust-stamp">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 2l3 6 7 1-5 4 1 7-6-3-6 3 1-7-5-4 7-1z"/></svg>
-              <span>Powered by the SmartSolve GTO API</span>
-            </div>
             <h2 className="section-h" style={{ marginBottom: 14 }}>Every chart is <em>solver-verified</em> through our GTO API.</h2>
             <p className="section-d" style={{ marginBottom: 28 }}>
               SmartSolve runs on a proprietary GTO API — pre-computed solver solutions served on demand. Every range, frequency, and EV figure you see is a direct query against that API. No guesswork, no improvisation: just the same solver math the pros pay $475 for, served instantly.
