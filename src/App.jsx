@@ -1721,6 +1721,7 @@ function UploadsPage(props) {
   var _st = useState(0); var st = _st[0]; var setSt = _st[1];
   var _drag = useState(false); var drag = _drag[0]; var setDrag = _drag[1];
   var _fromHistory = useState(!!viewHand); var fromHistory = _fromHistory[0]; var setFromHistory = _fromHistory[1];
+  var _refExpanded = useState(false); var refExpanded = _refExpanded[0]; var setRefExpanded = _refExpanded[1];
   var ref = useRef(null);
 
   useEffect(function() {
@@ -1801,6 +1802,25 @@ function UploadsPage(props) {
       {err && <div style={{ padding: 14, borderRadius: 10, fontSize: 14, color: C.red, background: C.red + "10", border: "1px solid " + C.red + "20", marginTop: 16 }}>{err}</div>}
       {data && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14, animation: "fu 0.35s both" }}>
+          {img && (
+            <Glass style={{ overflow: "hidden", padding: 0, position: "sticky", top: 56, zIndex: 10 }}>
+              <button onClick={function() { setRefExpanded(!refExpanded); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
+                <img src={img} alt="" style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 6, border: "1px solid " + C.border, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: C.txm, fontFamily: "var(--m)", textTransform: "uppercase" }}>Screenshot</div>
+                  <div style={{ fontSize: 12, color: C.txb, marginTop: 2 }}>{refExpanded ? "Tap to collapse" : "Tap to expand"}</div>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ transform: refExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}>
+                  <path d="M6 9l6 6 6-6" stroke={C.txm} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              {refExpanded && (
+                <div style={{ background: C.bg, display: "flex", justifyContent: "center", padding: 4, borderTop: "1px solid " + C.border }}>
+                  <img src={img} alt="" style={{ maxWidth: "100%", maxHeight: 360, objectFit: "contain", display: "block", borderRadius: 8 }} />
+                </div>
+              )}
+            </Glass>
+          )}
           <div style={{ display: "flex", gap: 16, alignItems: "flex-end", flexWrap: "wrap" }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 6 }}>HERO {data.hero_position && <span style={{ color: C.gold }}>{"\u00B7"} {data.hero_position}</span>}</div>
