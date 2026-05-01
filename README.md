@@ -2,6 +2,7 @@
 
 GTO poker trainer with AI-powered hand analysis.
 
+
 ## Setup
 
 ```bash
