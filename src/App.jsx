@@ -3838,26 +3838,19 @@ export default function App() {
           </div>
           <span style={{ fontSize: 15, fontWeight: 700, color: C.txb, letterSpacing: "-0.03em" }}>SmartSolve</span>
         </div>
-        <div style={{ display: "flex", gap: 2, flex: 1, overflow: "hidden", background: "rgba(255,255,255,0.025)", borderRadius: 8, padding: 3 }}>
-          {topNav.map(function(n) {
-            var active = pg === n.id;
-            return (
-              <button key={n.id} onClick={function() { go(n.id); }} style={{
-                fontFamily: "var(--f)", fontSize: 12, fontWeight: active ? 600 : 400,
-                color: active ? C.txb : C.txm,
-                background: active ? "rgba(255,255,255,0.07)" : "transparent",
-                border: "none", borderRadius: 6,
-                padding: "6px 12px", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
-                transition: "all 0.15s",
-                boxShadow: active ? "0 1px 3px rgba(0,0,0,0.2)" : "none",
-              }}>{n.t}</button>
-            );
-          })}
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start", marginRight: 8 }}>
           <button onClick={function() { setMenu(!menu); }} style={{
-            fontFamily: "var(--f)", fontSize: 12, color: C.txm,
-            background: "transparent", border: "none", borderRadius: 6,
-            padding: "6px 10px", cursor: "pointer", whiteSpace: "nowrap",
-          }}>{"\u00B7\u00B7\u00B7"}</button>
+            display: "flex", alignItems: "center", gap: 8,
+            fontFamily: "var(--f)", fontSize: 13, fontWeight: 600, color: C.txb,
+            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 8, padding: "7px 12px", cursor: "pointer",
+            transition: "background 0.15s",
+          }}>
+            <span>{(nav.find(function(n) { return n.id === pg; }) || { t: "Menu" }).t}</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style={{ transform: menu ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
+              <path d="M6 9l6 6 6-6" stroke={C.txm} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
         </div>
         <button onClick={signOut} title={auth.user && auth.user.email ? auth.user.email : "Sign out"} style={{
           fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", color: C.txm,
@@ -3867,13 +3860,14 @@ export default function App() {
       </div>
 
       {menu && (
-        <div style={{ position: "fixed", top: 52, right: 16, background: "rgba(26,28,42,0.98)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 6, zIndex: 30, boxShadow: "0 12px 40px rgba(0,0,0,0.5)", minWidth: 200 }}>
-          {moreNav.map(function(n) {
+        <div style={{ position: "fixed", top: 52, left: 16, right: 16, maxWidth: 320, background: "rgba(26,28,42,0.98)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 6, zIndex: 30, boxShadow: "0 12px 40px rgba(0,0,0,0.5)", maxHeight: "calc(100vh - 64px)", overflowY: "auto" }}>
+          {nav.map(function(n) {
+            var active = pg === n.id;
             return (
-              <button key={n.id} onClick={function() { go(n.id); }} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "8px 12px", background: "transparent", border: "none", borderRadius: 6, cursor: "pointer", textAlign: "left", fontFamily: "var(--f)" }}>
-                <span style={{ flexShrink: 0, opacity: 0.6 }}>{n.icon}</span>
+              <button key={n.id} onClick={function() { go(n.id); }} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "8px 12px", background: active ? "rgba(212,167,44,0.08)" : "transparent", border: "none", borderRadius: 6, cursor: "pointer", textAlign: "left", fontFamily: "var(--f)" }}>
+                <span style={{ flexShrink: 0, opacity: active ? 1 : 0.6, color: active ? C.gold : C.tx }}>{n.icon}</span>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: C.txb }}>{n.t}</div>
+                  <div style={{ fontSize: 13, fontWeight: active ? 600 : 500, color: active ? C.gold : C.txb }}>{n.t}</div>
                   <div style={{ fontSize: 11, color: C.txm }}>{n.d}</div>
                 </div>
               </button>
