@@ -3146,10 +3146,10 @@ var landingCss = "\
 .ss-landing .matrix-mini { margin-top: 18px; display: grid; grid-template-columns: repeat(13, 1fr); gap: 1.5px; aspect-ratio: 1; max-width: 280px; }\
 .ss-landing .matrix-mini > div { border-radius: 1.5px; aspect-ratio: 1; display: grid; place-items: center; font-family: var(--m); font-size: 7px; font-weight: 700; color: rgba(255,255,255,0.65); }\
 .ss-landing .eq-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }\
-.ss-landing .eq-cards { display: flex; gap: 4px; flex-shrink: 0; }\
-.ss-landing .eq-cards .card { width: 26px; height: 36px; }\
-.ss-landing .eq-cards .card .rank { font-size: 12px; }\
-.ss-landing .eq-cards .card .suit { font-size: 11px; }\
+.ss-landing .eq-cards { display: flex; gap: 5px; flex-shrink: 0; }\
+.ss-landing .eq-cards .card { width: 32px; height: 44px; }\
+.ss-landing .eq-cards .card .rank { font-size: 14px; }\
+.ss-landing .eq-cards .card .suit { font-size: 13px; }\
 .ss-landing .eq-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--bg2); overflow: hidden; display: flex; }\
 .ss-landing .eq-bar > div { height: 100%; }\
 .ss-landing .eq-bar .e1 { background: var(--raise); }\
