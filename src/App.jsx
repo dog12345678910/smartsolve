@@ -1367,8 +1367,17 @@ function TrainerPage() {
   var _streak = useState(0); var streak = _streak[0]; var setStreak = _streak[1];
   var _bestStreak = useState(0); var bestStreak = _bestStreak[0]; var setBestStreak = _bestStreak[1];
   var timerRef = useRef(null);
+  var nextHandRef = useRef(null);
 
   var modePositions = mode === "rfi" ? Object.keys(RFI) : ["BB vs UTG","BB vs MP","BB vs CO","BB vs BTN","BB vs SB"];
+
+  useEffect(function() {
+    if (!ans || !nextHandRef.current) return;
+    var el = nextHandRef.current;
+    requestAnimationFrame(function() {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [ans]);
 
   useEffect(function() {
     if (modePositions.indexOf(pos) === -1) setPos(modePositions[0]);
@@ -1647,7 +1656,7 @@ function TrainerPage() {
               border: "1px solid " + (showRange ? "rgba(212,167,44,0.15)" : "rgba(255,255,255,0.05)"),
               borderRadius: 8, padding: "13px", cursor: "pointer",
             }}>{showRange ? "HIDE RANGE" : "SHOW RANGE"}</button>
-            <button onClick={deal} style={{
+            <button ref={nextHandRef} onClick={deal} style={{
               fontFamily: "var(--m)", fontSize: 11, fontWeight: 700, letterSpacing: "0.03em",
               color: "#000", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
               border: "none", borderRadius: 8, padding: "13px", cursor: "pointer",
