@@ -3108,11 +3108,11 @@ var landingCss = "\
 .ss-landing .hand-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }\
 .ss-landing .hand-label { font-family: var(--m); font-size: 11px; color: var(--txm); width: 50px; }\
 .ss-landing .hand-cards { display: flex; gap: 6px; }\
-.ss-landing .card { width: 36px; height: 50px; border-radius: 4px; background: linear-gradient(180deg, #fafafa, #d8d4cb); display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--m); font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 -1px 0 rgba(0,0,0,0.1); }\
+.ss-landing .card { width: 40px; height: 56px; border-radius: 5px; background: linear-gradient(180deg, #fafafa, #d8d4cb); display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--m); font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 -1px 0 rgba(0,0,0,0.1); }\
 .ss-landing .card.h, .ss-landing .card.d { color: #c0392b; }\
 .ss-landing .card.s, .ss-landing .card.c { color: #1a1a1a; }\
-.ss-landing .card .rank { font-size: 14px; line-height: 1; }\
-.ss-landing .card .suit { font-size: 11px; line-height: 1; margin-top: 1px; }\
+.ss-landing .card .rank { font-size: 17px; line-height: 1; }\
+.ss-landing .card .suit { font-size: 16px; line-height: 1; margin-top: 2px; }\
 .ss-landing .street-row { display: grid; grid-template-columns: 60px 1fr auto; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }\
 .ss-landing .street-row:last-child { border: none; }\
 .ss-landing .street-name { font-family: var(--m); font-size: 11px; color: var(--txm); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }\
@@ -3148,8 +3148,8 @@ var landingCss = "\
 .ss-landing .eq-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }\
 .ss-landing .eq-cards { display: flex; gap: 4px; flex-shrink: 0; }\
 .ss-landing .eq-cards .card { width: 26px; height: 36px; }\
-.ss-landing .eq-cards .card .rank { font-size: 11px; }\
-.ss-landing .eq-cards .card .suit { font-size: 8px; }\
+.ss-landing .eq-cards .card .rank { font-size: 12px; }\
+.ss-landing .eq-cards .card .suit { font-size: 11px; }\
 .ss-landing .eq-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--bg2); overflow: hidden; display: flex; }\
 .ss-landing .eq-bar > div { height: 100%; }\
 .ss-landing .eq-bar .e1 { background: var(--raise); }\
