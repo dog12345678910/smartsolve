@@ -641,6 +641,7 @@ var Ic = {
   help: <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke={C.amber} strokeWidth="1.8"/><path d="M9 9a3.5 3.5 0 015.74 1.75c0 2.25-3.25 2.75-3.25 4.75" stroke={C.amber} strokeWidth="1.8" strokeLinecap="round"/><circle cx="12" cy="19" r="1" fill={C.amber}/></svg>,
   bankroll: <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke={C.green} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   equity: <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M4 20h16" stroke={C.green} strokeWidth="2" strokeLinecap="round"/><path d="M4 20V10l4-3 4 5 4-8 4 6v10" stroke={C.green} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  analytics: <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M3 3v18h18" stroke={C.blue} strokeWidth="2" strokeLinecap="round"/><path d="M7 14l4-4 3 3 5-6" stroke={C.blue} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="7" cy="14" r="1.5" fill={C.blue}/><circle cx="11" cy="10" r="1.5" fill={C.blue}/><circle cx="14" cy="13" r="1.5" fill={C.blue}/><circle cx="19" cy="7" r="1.5" fill={C.blue}/></svg>,
 };
 
 /* CARD */
@@ -2938,6 +2939,151 @@ function EquityPage() {
   );
 }
 
+function AnalyticsPage(props) {
+  var history = props.history || [];
+
+  var stats = useMemo(function() {
+    if (!history.length) return null;
+    var total = history.length;
+    var gradeMap = { A: 4, B: 3, C: 2, D: 1, F: 0 };
+    var gradeColor = { A: C.green, B: C.blue, C: C.amber, D: C.amber, F: C.red };
+    var gradeCounts = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+    var totalEv = 0;
+    var totalGrade = 0;
+    var gradedCount = 0;
+    var positions = {};
+    var mistakes = 0;
+
+    history.forEach(function(h) {
+      var g = h.overall && h.overall.grade ? h.overall.grade[0].toUpperCase() : null;
+      if (g && gradeCounts[g] != null) {
+        gradeCounts[g]++;
+        totalGrade += gradeMap[g];
+        gradedCount++;
+      }
+      var ev = h.overall && h.overall.ev_lost != null ? h.overall.ev_lost : (h.ev_lost || 0);
+      totalEv += +ev || 0;
+      if (g === "D" || g === "F") mistakes++;
+      var pos = h.hero_position;
+      if (pos) {
+        if (!positions[pos]) positions[pos] = { hands: 0, ev: 0, score: 0, count: 0 };
+        positions[pos].hands++;
+        positions[pos].ev += +ev || 0;
+        if (g && gradeMap[g] != null) {
+          positions[pos].score += gradeMap[g];
+          positions[pos].count++;
+        }
+      }
+    });
+
+    var avgGradeNum = gradedCount ? totalGrade / gradedCount : 0;
+    var avgGradeLetter = avgGradeNum >= 3.5 ? "A" : avgGradeNum >= 2.5 ? "B" : avgGradeNum >= 1.5 ? "C" : avgGradeNum >= 0.5 ? "D" : "F";
+
+    var posList = Object.keys(positions).map(function(p) {
+      var d = positions[p];
+      var avg = d.count ? d.score / d.count : 0;
+      return { pos: p, hands: d.hands, ev: d.ev, avgScore: avg, avgLetter: avg >= 3.5 ? "A" : avg >= 2.5 ? "B" : avg >= 1.5 ? "C" : avg >= 0.5 ? "D" : "F" };
+    }).sort(function(a, b) { return b.hands - a.hands; });
+
+    var recent = history.slice(0, Math.min(20, history.length)).reverse();
+    var maxBar = Math.max(0.5, Math.max.apply(null, recent.map(function(h) {
+      var ev = h.overall && h.overall.ev_lost != null ? h.overall.ev_lost : (h.ev_lost || 0);
+      return Math.abs(+ev || 0);
+    })));
+
+    return { total: total, totalEv: totalEv, gradeCounts: gradeCounts, gradeColor: gradeColor, avgGradeLetter: avgGradeLetter, mistakes: mistakes, posList: posList, recent: recent, maxBar: maxBar };
+  }, [history]);
+
+  if (!stats) return <Glass style={{ textAlign: "center", padding: 48 }}><p style={{ color: C.txm, fontSize: 16 }}>No hands yet. Upload a screenshot to start tracking your analytics.</p></Glass>;
+
+  var avgEv = (stats.totalEv / stats.total).toFixed(2);
+  var maxGrade = Math.max.apply(null, ["A","B","C","D","F"].map(function(k) { return stats.gradeCounts[k]; }));
+
+  return (
+    <div>
+      <div style={{ marginBottom: 16 }}>
+        <span style={{ fontSize: 22, fontWeight: 300, color: C.txb, letterSpacing: "-0.02em" }}>Analytics</span>
+        <div style={{ fontSize: 12, fontFamily: "var(--m)", color: C.txm, marginTop: 2 }}>{stats.total} hand{stats.total !== 1 ? "s" : ""} analyzed</div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 14 }}>
+        {[
+          { label: "HANDS", value: stats.total, color: C.txb },
+          { label: "AVG GRADE", value: stats.avgGradeLetter, color: stats.gradeColor[stats.avgGradeLetter] },
+          { label: "EV LOST", value: stats.totalEv.toFixed(1) + "bb", color: stats.totalEv > 0 ? C.red : C.green },
+          { label: "MISTAKES", value: stats.mistakes, color: stats.mistakes > 0 ? C.red : C.green },
+        ].map(function(s) {
+          return (
+            <div key={s.label} style={{ padding: "12px 8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 10, textAlign: "center" }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 4 }}>{s.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: s.color, fontFamily: "var(--m)" }}>{s.value}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      <Glass style={{ padding: 18, marginBottom: 14 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 14 }}>GRADE DISTRIBUTION</div>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 110 }}>
+          {["A","B","C","D","F"].map(function(g) {
+            var count = stats.gradeCounts[g];
+            var pct = stats.total ? (count / stats.total * 100) : 0;
+            var h = maxGrade ? (count / maxGrade * 100) : 0;
+            return (
+              <div key={g} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                <div style={{ fontSize: 10, fontFamily: "var(--m)", color: C.txm }}>{count}</div>
+                <div style={{ width: "100%", flex: 1, display: "flex", alignItems: "flex-end" }}>
+                  <div style={{ width: "100%", height: h + "%", minHeight: 2, background: stats.gradeColor[g], borderRadius: "4px 4px 0 0", opacity: count ? 0.85 : 0.15, transition: "height 0.3s" }} />
+                </div>
+                <div style={{ fontSize: 12, fontFamily: "var(--m)", fontWeight: 700, color: stats.gradeColor[g] }}>{g}</div>
+                <div style={{ fontSize: 9, fontFamily: "var(--m)", color: C.txm }}>{pct.toFixed(0)}%</div>
+              </div>
+            );
+          })}
+        </div>
+      </Glass>
+
+      <Glass style={{ padding: 18, marginBottom: 14 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 14 }}>RECENT EV TREND · LAST {stats.recent.length}</div>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 80 }}>
+          {stats.recent.map(function(h, i) {
+            var ev = h.overall && h.overall.ev_lost != null ? h.overall.ev_lost : (h.ev_lost || 0);
+            ev = +ev || 0;
+            var hgt = (Math.abs(ev) / stats.maxBar) * 100;
+            var color = ev > 0.5 ? C.red : ev > 0 ? C.amber : C.green;
+            return (
+              <div key={i} title={ev + "bb"} style={{ flex: 1, height: Math.max(2, hgt) + "%", background: color, borderRadius: 2, opacity: 0.75 }} />
+            );
+          })}
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 9, fontFamily: "var(--m)", color: C.txm }}>
+          <span>Older</span>
+          <span>Recent</span>
+        </div>
+      </Glass>
+
+      {stats.posList.length > 0 && (
+        <Glass style={{ padding: 18 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 14 }}>BY POSITION</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {stats.posList.map(function(p) {
+              var avgEvPerHand = p.ev / p.hands;
+              return (
+                <div key={p.pos} style={{ display: "grid", gridTemplateColumns: "60px 1fr 70px 60px", gap: 10, alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                  <div style={{ fontFamily: "var(--m)", fontSize: 13, fontWeight: 700, color: C.gold }}>{p.pos}</div>
+                  <div style={{ fontFamily: "var(--m)", fontSize: 11, color: C.txm }}>{p.hands} hand{p.hands !== 1 ? "s" : ""}</div>
+                  <div style={{ fontFamily: "var(--m)", fontSize: 11, color: avgEvPerHand > 0.5 ? C.red : avgEvPerHand > 0 ? C.amber : C.green, textAlign: "right" }}>{avgEvPerHand >= 0 ? "+" : ""}{avgEvPerHand.toFixed(2)}bb</div>
+                  <div style={{ fontFamily: "var(--m)", fontSize: 14, fontWeight: 700, color: stats.gradeColor[p.avgLetter], textAlign: "right" }}>{p.avgLetter}</div>
+                </div>
+              );
+            })}
+          </div>
+        </Glass>
+      )}
+    </div>
+  );
+}
+
 function HandsPage(props) {
   var history = props.history;
   var onView = props.onView;
@@ -3839,6 +3985,7 @@ export default function App() {
   var nav = [
     { id: "study", icon: Ic.study, t: "Study", d: "Study any spot" },
     { id: "trainer", icon: Ic.train, t: "Trainer", d: "Play vs. GTO" },
+    { id: "analytics", icon: Ic.analytics, t: "Analytics", d: "Track your progress" },
     { id: "uploads", icon: Ic.upload, t: "Uploads", d: "Analyze your game" },
     { id: "custom", icon: Ic.solve, t: "Custom", d: "AI solve any spot" },
     { id: "builder", icon: Ic.range, t: "Ranges", d: "Build ranges" },
@@ -3993,6 +4140,7 @@ export default function App() {
         <div style={{ padding: "28px 20px 80px", maxWidth: 720, margin: "0 auto" }}>
           {pg === "study" && <StudyPage />}
           {pg === "trainer" && <TrainerPage />}
+          {pg === "analytics" && <AnalyticsPage history={hist} />}
           {pg === "uploads" && <UploadsPage onResult={addH} viewHand={viewHand} clearViewHand={function() { setViewHand(null); }} />}
           {pg === "custom" && <CustomPage />}
           {pg === "builder" && <RangeBuilderPage />}
