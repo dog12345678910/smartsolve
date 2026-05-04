@@ -1355,6 +1355,9 @@ var SEATS = [
 ];
 
 function TrainerPage() {
+  var _session = useState("idle"); var session = _session[0]; var setSession = _session[1];
+  var _startedAt = useState(null); var startedAt = _startedAt[0]; var setStartedAt = _startedAt[1];
+  var _endedAt = useState(null); var endedAt = _endedAt[0]; var setEndedAt = _endedAt[1];
   var _mode = useState("rfi"); var mode = _mode[0]; var setMode = _mode[1];
   var _pos = useState("BTN"); var pos = _pos[0]; var setPos = _pos[1];
   var _hand = useState(null); var hand = _hand[0]; var setHand = _hand[1];
@@ -1441,7 +1444,20 @@ function TrainerPage() {
     setEvLoss(0); setLog([]); setStreak(0); setBestStreak(0);
   };
 
-  useEffect(function() { deal(); }, [deal]);
+  var startSession = function() {
+    setStats({ hands: 0, correct: 0 });
+    setEvLoss(0); setLog([]); setStreak(0); setBestStreak(0);
+    setStartedAt(Date.now()); setEndedAt(null);
+    setSession("active");
+  };
+
+  var endSession = function() {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setEndedAt(Date.now());
+    setSession("ended");
+  };
+
+  useEffect(function() { if (session === "active") deal(); }, [deal, session]);
 
   var c1 = hand ? parseCards(hand.c1) : [];
   var c2 = hand ? parseCards(hand.c2) : [];
@@ -1460,6 +1476,124 @@ function TrainerPage() {
     return g;
   }, [pos, mode]);
 
+  if (session === "idle") {
+    return (
+      <div style={{ maxWidth: 460, margin: "40px auto 0", textAlign: "center" }}>
+        <div style={{ width: 64, height: 64, borderRadius: 16, background: "rgba(212,167,44,0.08)", border: "1px solid rgba(212,167,44,0.18)", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 22 }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="5" y="8" width="14" height="10" rx="2.5" fill={C.gold}/><circle cx="9" cy="13" r="1.5" fill={C.bg1}/><circle cx="15" cy="13" r="1.5" fill={C.bg1}/></svg>
+        </div>
+        <div style={{ fontSize: 26, fontWeight: 700, color: C.txb, letterSpacing: "-0.02em", marginBottom: 8 }}>GTO Trainer</div>
+        <p style={{ fontSize: 14, color: C.txm, lineHeight: 1.55, marginBottom: 28 }}>Drill random hands against solver-verified ranges. Track your accuracy, EV loss, and streak across the session.</p>
+        <button onClick={startSession} style={{
+          fontFamily: "var(--f)", fontSize: 15, fontWeight: 700, color: "#000",
+          background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+          border: "none", borderRadius: 10, padding: "14px 32px", cursor: "pointer",
+          boxShadow: "0 4px 18px rgba(212,167,44,0.28)",
+        }}>Start Training Session</button>
+      </div>
+    );
+  }
+
+  if (session === "ended") {
+    var pct = stats.hands > 0 ? Math.round(stats.correct / stats.hands * 100) : 0;
+    var durationMs = (endedAt || Date.now()) - (startedAt || Date.now());
+    var minutes = Math.max(0, Math.floor(durationMs / 60000));
+    var seconds = Math.max(0, Math.floor((durationMs % 60000) / 1000));
+    var hpm = durationMs > 0 ? (stats.hands / (durationMs / 60000)).toFixed(1) : "0";
+
+    var posBreak = {};
+    log.forEach(function(e) {
+      var p = e.pos || "?";
+      if (!posBreak[p]) posBreak[p] = { hands: 0, correct: 0 };
+      posBreak[p].hands++;
+      if (e.right) posBreak[p].correct++;
+    });
+    var posList = Object.keys(posBreak).map(function(p) {
+      var d = posBreak[p];
+      return { pos: p, hands: d.hands, correct: d.correct, pct: d.hands ? Math.round(d.correct / d.hands * 100) : 0 };
+    }).sort(function(a, b) { return b.hands - a.hands; });
+
+    var mistakes = log.filter(function(e) { return !e.right; }).slice(0, 8);
+
+    return (
+      <div>
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", color: C.gold, fontFamily: "var(--m)", marginBottom: 4 }}>SESSION COMPLETE</div>
+          <div style={{ fontSize: 26, fontWeight: 300, color: C.txb, letterSpacing: "-0.02em" }}>Analytics</div>
+          <div style={{ fontSize: 12, fontFamily: "var(--m)", color: C.txm, marginTop: 4 }}>{minutes}m {seconds}s · {hpm} hands/min</div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 14 }}>
+          {[
+            { label: "HANDS", value: stats.hands, color: C.txb },
+            { label: "ACCURACY", value: stats.hands ? pct + "%" : "—", color: pct >= 70 ? C.green : pct >= 40 ? C.amber : stats.hands ? C.red : C.txm },
+            { label: "BEST STREAK", value: bestStreak, color: bestStreak >= 5 ? C.gold : C.txb },
+            { label: "EV LOST", value: evLoss + "bb", color: evLoss > 0 ? C.red : C.green },
+          ].map(function(s) {
+            return (
+              <div key={s.label} style={{ padding: "12px 8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 10, textAlign: "center" }}>
+                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 4 }}>{s.label}</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: s.color, fontFamily: "var(--m)" }}>{s.value}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {posList.length > 0 && (
+          <Glass style={{ padding: 18, marginBottom: 14 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 14 }}>BY POSITION</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {posList.map(function(p) {
+                return (
+                  <div key={p.pos} style={{ display: "grid", gridTemplateColumns: "70px 1fr 60px 50px", gap: 10, alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                    <div style={{ fontFamily: "var(--m)", fontSize: 13, fontWeight: 700, color: C.gold }}>{p.pos.replace("BB vs ", "BB v ")}</div>
+                    <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.04)", overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: p.pct + "%", background: p.pct >= 70 ? C.green : p.pct >= 40 ? C.amber : C.red, borderRadius: 3 }} />
+                    </div>
+                    <div style={{ fontFamily: "var(--m)", fontSize: 11, color: C.txm, textAlign: "right" }}>{p.correct}/{p.hands}</div>
+                    <div style={{ fontFamily: "var(--m)", fontSize: 13, fontWeight: 700, color: p.pct >= 70 ? C.green : p.pct >= 40 ? C.amber : C.red, textAlign: "right" }}>{p.pct}%</div>
+                  </div>
+                );
+              })}
+            </div>
+          </Glass>
+        )}
+
+        {mistakes.length > 0 && (
+          <Glass style={{ padding: 18, marginBottom: 14 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 12 }}>MISTAKES TO REVIEW</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {mistakes.map(function(m, i) {
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 10px", background: "rgba(215,85,85,0.05)", border: "1px solid rgba(215,85,85,0.1)", borderRadius: 6 }}>
+                    <span style={{ fontFamily: "var(--m)", fontSize: 13, fontWeight: 700, color: C.txb, minWidth: 36 }}>{m.key}</span>
+                    <span style={{ fontFamily: "var(--m)", fontSize: 10, color: C.txm }}>{m.pos.replace("BB vs ", "BB v ")}</span>
+                    <span style={{ marginLeft: "auto", fontFamily: "var(--m)", fontSize: 10, color: C.txm }}>You: <span style={{ color: C.red, fontWeight: 700 }}>{m.action}</span></span>
+                    <span style={{ fontFamily: "var(--m)", fontSize: 10, color: C.txm }}>GTO: <span style={{ color: C.green, fontWeight: 700 }}>{m.correct}</span></span>
+                  </div>
+                );
+              })}
+            </div>
+          </Glass>
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <button onClick={function() { setSession("idle"); }} style={{
+            fontFamily: "var(--m)", fontSize: 11, fontWeight: 600, letterSpacing: "0.04em",
+            color: C.txm, background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, padding: "13px", cursor: "pointer",
+          }}>BACK TO START</button>
+          <button onClick={startSession} style={{
+            fontFamily: "var(--m)", fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+            color: "#000", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+            border: "none", borderRadius: 8, padding: "13px", cursor: "pointer",
+            boxShadow: "0 2px 12px rgba(212,167,44,0.15)",
+          }}>NEW SESSION</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Header */}
@@ -1468,13 +1602,21 @@ function TrainerPage() {
           <span style={{ fontSize: 28, fontWeight: 800, color: C.gold, letterSpacing: "-0.03em" }}>{pos.replace("BB vs ", "BB v ")}</span>
           <span style={{ fontSize: 16, color: C.txm, fontWeight: 300 }}>{mode === "rfi" ? "Raise First In" : "Facing Open"}</span>
         </div>
-        <button onClick={function() { setTimed(!timed); }} style={{
-          fontFamily: "var(--m)", fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
-          color: timed ? C.gold : C.txm,
-          background: timed ? "rgba(212,167,44,0.06)" : "transparent",
-          border: "1px solid " + (timed ? "rgba(212,167,44,0.15)" : "rgba(255,255,255,0.05)"),
-          borderRadius: 6, padding: "5px 12px", cursor: "pointer",
-        }}>TIMED {timed ? "ON" : "OFF"}</button>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={function() { setTimed(!timed); }} style={{
+            fontFamily: "var(--m)", fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
+            color: timed ? C.gold : C.txm,
+            background: timed ? "rgba(212,167,44,0.06)" : "transparent",
+            border: "1px solid " + (timed ? "rgba(212,167,44,0.15)" : "rgba(255,255,255,0.05)"),
+            borderRadius: 6, padding: "5px 12px", cursor: "pointer",
+          }}>TIMED {timed ? "ON" : "OFF"}</button>
+          <button onClick={endSession} style={{
+            fontFamily: "var(--m)", fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
+            color: C.red, background: "rgba(215,85,85,0.06)",
+            border: "1px solid rgba(215,85,85,0.15)",
+            borderRadius: 6, padding: "5px 12px", cursor: "pointer",
+          }}>END SESSION</button>
+        </div>
       </div>
 
       {/* Mode + Position */}
@@ -3985,7 +4127,6 @@ export default function App() {
   var nav = [
     { id: "study", icon: Ic.study, t: "Study", d: "Study any spot" },
     { id: "trainer", icon: Ic.train, t: "Trainer", d: "Play vs. GTO" },
-    { id: "analytics", icon: Ic.analytics, t: "Analytics", d: "Track your progress" },
     { id: "uploads", icon: Ic.upload, t: "Uploads", d: "Analyze your game" },
     { id: "custom", icon: Ic.solve, t: "Custom", d: "AI solve any spot" },
     { id: "builder", icon: Ic.range, t: "Ranges", d: "Build ranges" },
@@ -4140,7 +4281,6 @@ export default function App() {
         <div style={{ padding: "28px 20px 80px", maxWidth: 720, margin: "0 auto" }}>
           {pg === "study" && <StudyPage />}
           {pg === "trainer" && <TrainerPage />}
-          {pg === "analytics" && <AnalyticsPage history={hist} />}
           {pg === "uploads" && <UploadsPage onResult={addH} viewHand={viewHand} clearViewHand={function() { setViewHand(null); }} />}
           {pg === "custom" && <CustomPage />}
           {pg === "builder" && <RangeBuilderPage />}
