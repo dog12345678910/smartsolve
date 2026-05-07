@@ -1716,7 +1716,7 @@ function TrainerPage() {
           </div>
         )}
         <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: C.txm, fontFamily: "var(--m)", marginBottom: 16 }}>
-          {pos.replace("BB vs ", "BB v ")} · {mode === "rfi" ? "RFI" : "vs RFI"} · 200bb
+          {pos.replace("BB vs ", "BB v ")} · {mode === "rfi" ? "RFI" : "vs RFI"} · 100bb
           {timed && !ans && <span style={{ color: timer <= 3 ? C.red : C.gold, marginLeft: 10 }}>{timer}s</span>}
         </div>
         <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 12 }}>
