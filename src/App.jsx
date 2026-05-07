@@ -1688,6 +1688,16 @@ function TrainerPage() {
             }}>{seat.id}</button>
           );
         })}
+        <div aria-hidden="true" style={{
+          position: "absolute", left: "73%", top: "30%", transform: "translate(-50%, -50%)",
+          width: 22, height: 22, borderRadius: "50%",
+          background: "radial-gradient(circle at 35% 30%, #ffffff 0%, #e8e6df 60%, #c8c4b8 100%)",
+          border: "1.5px solid #8a7e58",
+          boxShadow: "0 3px 6px rgba(0,0,0,0.45), inset 0 -1px 1px rgba(0,0,0,0.15)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontFamily: "var(--m)", fontSize: 9, fontWeight: 800, color: "#3a2f0f",
+          letterSpacing: "0.02em", pointerEvents: "none",
+        }}>D</div>
       </div>
 
       {/* Stats */}
