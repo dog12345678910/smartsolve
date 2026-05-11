@@ -657,9 +657,9 @@ function Crd(props) {
     }}>
       <div style={{ position: "absolute", top: sz * 0.06, left: sz * 0.1, lineHeight: 1 }}>
         <div style={{ fontSize: sz * 0.3, fontWeight: 800, color: props.clr, fontFamily: "var(--m)" }}>{props.r}</div>
-        <div style={{ fontSize: sz * 0.24, color: props.clr, marginTop: -1 }}>{props.sym}</div>
+        <div style={{ fontSize: sz * 0.3, color: props.clr, marginTop: 0 }}>{props.sym}</div>
       </div>
-      <span style={{ fontSize: sz * 0.44, color: props.clr, marginTop: sz * 0.1 }}>{props.sym}</span>
+      <span style={{ fontSize: sz * 0.55, color: props.clr, marginTop: sz * 0.08 }}>{props.sym}</span>
     </div>
   );
 }
