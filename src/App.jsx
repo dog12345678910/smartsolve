@@ -608,11 +608,14 @@ function mkGrid(rs) {
 
 var SYS_PROMPT = "You are an expert Texas Hold'em poker analyst. You can read screenshots from ANY poker client including: ClubWPT Gold (web-based, sweepstakes, Chips currency — treat Chips as dollar amounts), PokerStars, GGPoker, WPN/ACR, 888, PartyPoker, ClubGG, Ignition, BetOnline, and any other poker site or app. For ClubWPT Gold specifically: chips are displayed as 'SC' (Sweeps Coins) or plain numbers, the hero seat is highlighted, cards are shown face-up for hero, and the table layout may be portrait-oriented. Read all visible information: hero cards, board cards, pot size, bet sizes, player positions, stack sizes, and action history. Respond ONLY in valid JSON (no markdown, no backticks). Structure: {\"hero_position\":\"BTN\",\"villain_position\":\"BB\",\"hero_cards\":\"Ah Kd\",\"villain_cards\":\"unknown\",\"community_cards\":\"8s 5s 2h Ts 8h\",\"final_pot\":\"860\",\"blinds\":\"5/10\",\"result\":\"Hero wins\",\"streets\":[{\"street\":\"Preflop\",\"board\":\"\",\"pot_at_start\":\"15\",\"action_summary\":\"Hero raises to 25, BB calls\",\"hero_actual_action\":\"Raise to 25\",\"gto_actions\":[{\"action\":\"Raise\",\"freq\":85,\"ev\":2.1,\"color\":\"#d4a72c\"},{\"action\":\"Call\",\"freq\":12,\"ev\":0.8,\"color\":\"#5b8def\"},{\"action\":\"Fold\",\"freq\":3,\"ev\":0,\"color\":\"#4a4a4a\"}],\"hero_chose\":\"Raise\",\"best_action\":\"Raise\",\"best_sizing\":\"2.5x\",\"reasoning\":\"Standard open\",\"verdict\":\"Best\",\"ev_loss\":0}],\"overall\":{\"grade\":\"A\",\"ev_lost\":0.5,\"summary\":\"Well played\",\"mistake\":\"None\",\"strength\":\"Good sizing\",\"takeaway\":\"Keep exploiting position\"}} Rules: gto_actions freq sum to 100. color: #d4a72c raise/bet, #4caf7d check, #5b8def call, #4a4a4a fold. verdict: Best/Good/Inaccurate/Mistake/Blunder.";
 
-async function askAI(content) {
+var EXTRACT_PROMPT = "You read a poker hand screenshot and return ONLY the table state as JSON. No analysis, no commentary. Distinguish T from 7 carefully: T is shown as 'T' or '10' with a flat top stroke; 7 has an angled descender. Distinguish spades/clubs (both black) and hearts/diamonds (both red) by shape. Read villain cards ONLY if they are clearly shown face-up at showdown — if villain's cards are face-down, hidden, or mucked, set villain_cards to \"unknown\". If a field is unclear, set it to \"unknown\" — do NOT guess. Return JSON only, no markdown. Schema: {\"hero_cards\":\"Ah Kd\",\"villain_cards\":\"Qs Qc\",\"hero_position\":\"CO\",\"villain_position\":\"BB\",\"effective_stack_bb\":100,\"blinds\":\"5/10\",\"final_pot\":\"120\",\"community_cards\":\"Qd Js 7c\",\"streets\":[{\"street\":\"Preflop\",\"board\":\"\",\"action_summary\":\"Hero opens 2.5x, BB calls\",\"hero_actual_action\":\"Raise 2.5x\"}],\"confidence\":{\"hero_cards\":\"high\",\"villain_cards\":\"high\",\"hero_position\":\"high\",\"community_cards\":\"high\",\"streets\":\"med\"}}. Use card notation like 'Ah Kd' (rank + lowercase suit: h/d/c/s). Position values: UTG, MP, CO, BTN, SB, BB, or unknown. Stack as integer big blinds. Confidence: low/med/high per field.";
+
+async function askAI(content, opts) {
+  opts = opts || {};
   var body = {
-    model: "claude-sonnet-4-6",
-    max_tokens: 4096,
-    system: SYS_PROMPT,
+    model: opts.model || "claude-sonnet-4-6",
+    max_tokens: opts.max_tokens || 4096,
+    system: opts.system || SYS_PROMPT,
     messages: [{ role: "user", content: content }],
   };
 
@@ -657,9 +660,9 @@ function Crd(props) {
     }}>
       <div style={{ position: "absolute", top: sz * 0.06, left: sz * 0.1, lineHeight: 1 }}>
         <div style={{ fontSize: sz * 0.3, fontWeight: 800, color: props.clr, fontFamily: "var(--m)" }}>{props.r}</div>
-        <div style={{ fontSize: sz * 0.24, color: props.clr, marginTop: -1 }}>{props.sym}</div>
+        <div style={{ fontSize: sz * 0.3, color: props.clr, marginTop: 0 }}>{props.sym}</div>
       </div>
-      <span style={{ fontSize: sz * 0.44, color: props.clr, marginTop: sz * 0.1 }}>{props.sym}</span>
+      <span style={{ fontSize: sz * 0.55, color: props.clr, marginTop: sz * 0.08 }}>{props.sym}</span>
     </div>
   );
 }
@@ -1884,6 +1887,10 @@ function UploadsPage(props) {
   var _drag = useState(false); var drag = _drag[0]; var setDrag = _drag[1];
   var _fromHistory = useState(!!viewHand); var fromHistory = _fromHistory[0]; var setFromHistory = _fromHistory[1];
   var _refExpanded = useState(false); var refExpanded = _refExpanded[0]; var setRefExpanded = _refExpanded[1];
+  var _extracted = useState(null); var extracted = _extracted[0]; var setExtracted = _extracted[1];
+  var _extractPhase = useState("idle"); var extractPhase = _extractPhase[0]; var setExtractPhase = _extractPhase[1];
+  var _picking = useState(null); var picking = _picking[0]; var setPicking = _picking[1];
+  var _pickedRank = useState(null); var pickedRank = _pickedRank[0]; var setPickedRank = _pickedRank[1];
   var ref = useRef(null);
 
   useEffect(function() {
@@ -1905,23 +1912,135 @@ function UploadsPage(props) {
 
   var drop = useCallback(function(e) { e.preventDefault(); setDrag(false); load(e.dataTransfer.files[0]); }, [load]);
 
-  var run = async function() {
-    if (!b64) return; setBusy(true); setErr(null); setData(null);
+  var extract = async function() {
+    if (!b64) return;
+    setBusy(true); setErr(null); setData(null); setExtracted(null);
+    setExtractPhase("extracting");
     try {
       var d = await askAI([
         { type: "image", source: { type: "base64", media_type: mime, data: b64 } },
-        { type: "text", text: "Analyze this poker hand screenshot. Identify the poker client (ClubWPT Gold, PokerStars, GGPoker, etc). Read hero cards, board, pot, bets, positions, and all action. Give full GTO breakdown with frequencies and verdicts per street." },
-      ]);
-      setData(d); setSt(0); if (onResult) onResult(d);
-    } catch (e) { setErr(e.message); } finally { setBusy(false); }
+        { type: "text", text: "Read this poker hand screenshot and return the table state as JSON only." },
+      ], { model: "claude-opus-4-7", system: EXTRACT_PROMPT, max_tokens: 1500 });
+      setExtracted(d);
+      setExtractPhase("confirm");
+    } catch (e) {
+      setErr(e.message); setExtractPhase("idle");
+    } finally { setBusy(false); }
   };
 
-  var reset = function() { setImg(null); setB64(null); setData(null); setErr(null); setFromHistory(false); };
+  var confirmAndAnalyze = async function() {
+    if (!extracted) return;
+    setBusy(true); setErr(null); setData(null);
+    setExtractPhase("analyzing");
+    try {
+      var verifiedText = "Analyze this poker hand. The cards and action have already been verified by the user — use this as ground truth:\n\n" + JSON.stringify(extracted, null, 2) + "\n\nGive a full GTO breakdown with frequencies and verdicts per street.";
+      var d = await askAI([
+        { type: "text", text: verifiedText },
+      ]);
+      if (extracted.hero_cards && !d.hero_cards) d.hero_cards = extracted.hero_cards;
+      if (extracted.hero_position && !d.hero_position) d.hero_position = extracted.hero_position;
+      if (extracted.villain_position && !d.villain_position) d.villain_position = extracted.villain_position;
+      if (extracted.community_cards && !d.community_cards) d.community_cards = extracted.community_cards;
+      setData(d); setSt(0); setExtractPhase("done"); if (onResult) onResult(d);
+    } catch (e) { setErr(e.message); setExtractPhase("confirm"); } finally { setBusy(false); }
+  };
+
+  var updateExtracted = function(field, value) {
+    setExtracted(function(e) {
+      var next = Object.assign({}, e);
+      next[field] = value;
+      return next;
+    });
+  };
+
+  var reset = function() { setImg(null); setB64(null); setData(null); setErr(null); setFromHistory(false); setExtracted(null); setExtractPhase("idle"); setPicking(null); setPickedRank(null); };
+
+  var parseHand = function(s) {
+    if (!s || typeof s !== "string") return [];
+    return s.trim().split(/\s+/).filter(function(c) { return c && c.length >= 2 && c !== "unknown"; });
+  };
+  var heroCardArr = extracted ? parseHand(extracted.hero_cards) : [];
+  while (heroCardArr.length < 2) heroCardArr.push(null);
+  var villainCardArr = extracted ? parseHand(extracted.villain_cards) : [];
+  while (villainCardArr.length < 2) villainCardArr.push(null);
+  var boardCardArr = extracted ? parseHand(extracted.community_cards) : [];
+  while (boardCardArr.length < 5) boardCardArr.push(null);
+  var usedCardsSet = new Set();
+  heroCardArr.forEach(function(c) { if (c) usedCardsSet.add(c); });
+  villainCardArr.forEach(function(c) { if (c) usedCardsSet.add(c); });
+  boardCardArr.forEach(function(c) { if (c) usedCardsSet.add(c); });
+
+  var setHeroCard = function(idx, card) {
+    var arr = heroCardArr.slice();
+    arr[idx] = card;
+    updateExtracted("hero_cards", arr.filter(function(c) { return c; }).join(" "));
+  };
+  var setVillainCard = function(idx, card) {
+    var arr = villainCardArr.slice();
+    arr[idx] = card;
+    updateExtracted("villain_cards", arr.filter(function(c) { return c; }).join(" "));
+  };
+  var setBoardCard = function(idx, card) {
+    var arr = boardCardArr.slice();
+    arr[idx] = card;
+    updateExtracted("community_cards", arr.filter(function(c) { return c; }).join(" "));
+  };
+  var pickCard = function(card) {
+    if (!picking) return;
+    if (picking.target === "hero") setHeroCard(picking.idx, card);
+    else if (picking.target === "villain") setVillainCard(picking.idx, card);
+    else setBoardCard(picking.idx, card);
+    setPicking(null); setPickedRank(null);
+  };
+  var clearCard = function(target, idx) {
+    if (target === "hero") setHeroCard(idx, null);
+    else if (target === "villain") setVillainCard(idx, null);
+    else setBoardCard(idx, null);
+  };
+
+  var POSITIONS = ["UTG","MP","CO","BTN","SB","BB"];
+  var EX_RANKS = ["A","K","Q","J","T","9","8","7","6","5","4","3","2"];
+  var EX_SUITS = ["s","h","d","c"];
+  var EX_SUIT_SYM = { s: "♠", h: "♥", d: "♦", c: "♣" };
+  var EX_SUIT_CLR = { s: "#7a7888", h: "#d45555", d: "#5b8def", c: "#4caf7d" };
+
+  function renderConfirmSlot(card, target, idx, small) {
+    var w = small ? 44 : 56;
+    var h = small ? 62 : 78;
+    var isActive = picking && picking.target === target && picking.idx === idx;
+    if (card) {
+      var r = card[0], s = card[1];
+      return (
+        <div onClick={function() { clearCard(target, idx); }} style={{
+          width: w, height: h, borderRadius: 10, background: "#1a1c2a",
+          border: "2px solid " + (EX_SUIT_CLR[s] || "#555") + "40",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          cursor: "pointer", position: "relative",
+          transition: "all 0.15s", boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+        }}>
+          <span style={{ fontSize: small ? 18 : 22, fontWeight: 800, color: EX_SUIT_CLR[s] || "#888", fontFamily: "var(--m)", lineHeight: 1 }}>{r}</span>
+          <span style={{ fontSize: small ? 15 : 18, color: EX_SUIT_CLR[s] || "#888", lineHeight: 1, marginTop: 2 }}>{EX_SUIT_SYM[s] || ""}</span>
+          <div style={{ position: "absolute", top: 3, right: 5, fontSize: 9, color: "rgba(255,255,255,0.25)" }}>×</div>
+        </div>
+      );
+    }
+    return (
+      <div onClick={function() { setPicking({ target: target, idx: idx }); }} style={{
+        width: w, height: h, borderRadius: 10,
+        border: isActive ? "2px solid " + C.gold : "2px dashed rgba(255,255,255,0.1)",
+        background: isActive ? "rgba(212,167,44,0.06)" : "rgba(255,255,255,0.015)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer", transition: "all 0.15s",
+      }}>
+        <span style={{ fontSize: small ? 18 : 22, color: isActive ? C.gold : "rgba(255,255,255,0.12)" }}>+</span>
+      </div>
+    );
+  }
   var street = data && data.streets ? data.streets[st] : null;
 
   return (
     <div>
-      {!data && !busy && (
+      {!data && !busy && !extracted && (
         <div>
           {!img ? (
             <div
@@ -1954,13 +2073,198 @@ function UploadsPage(props) {
               </div>
               <div style={{ display: "flex", borderTop: "1px solid " + C.border }}>
                 <button onClick={reset} style={{ flex: 1, padding: 16, fontSize: 14, fontFamily: "var(--f)", color: C.txm, background: "transparent", border: "none", borderRight: "1px solid " + C.border, cursor: "pointer" }}>Clear</button>
-                <button onClick={run} style={{ flex: 2, padding: 16, fontSize: 15, fontWeight: 700, fontFamily: "var(--f)", color: "#000", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")", border: "none", cursor: "pointer" }}>{"Analyze \u2192"}</button>
+                <button onClick={extract} style={{ flex: 2, padding: 16, fontSize: 15, fontWeight: 700, fontFamily: "var(--f)", color: "#000", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")", border: "none", cursor: "pointer" }}>{"Read Screenshot \u2192"}</button>
               </div>
             </Glass>
           )}
         </div>
       )}
-      {busy && <Loader steps={["Reading screenshot", "Identifying cards", "Tracing action", "Computing GTO", "Grading decisions"]} />}
+
+      {!data && !busy && extracted && (
+        <div style={{ animation: "fu 0.25s both" }}>
+          {img && (
+            <Glass style={{ overflow: "hidden", padding: 0, marginBottom: 14 }}>
+              <div style={{ background: C.bg, display: "flex", justifyContent: "center", padding: 6 }}>
+                <img src={img} alt="" style={{ maxWidth: "100%", maxHeight: 560, objectFit: "contain", display: "block", borderRadius: 10 }} />
+              </div>
+            </Glass>
+          )}
+
+          <Glass style={{ padding: 18, marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: C.gold, fontFamily: "var(--m)" }}>CONFIRM WHAT WE READ</div>
+              <div style={{ fontSize: 10, color: C.txm, fontFamily: "var(--m)" }}>Tap to fix anything wrong</div>
+            </div>
+
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 8 }}>HERO CARDS</div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+              {[0, 1].map(function(i) { return <div key={"h" + i}>{renderConfirmSlot(heroCardArr[i], "hero", i, false)}</div>; })}
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)" }}>VILLAIN CARDS</div>
+              <div style={{ fontSize: 9, color: C.txm, fontFamily: "var(--m)", opacity: 0.6 }}>(only if shown at showdown)</div>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+              {[0, 1].map(function(i) { return <div key={"v" + i}>{renderConfirmSlot(villainCardArr[i], "villain", i, false)}</div>; })}
+            </div>
+
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 8 }}>BOARD</div>
+            <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
+              {[0, 1, 2, 3, 4].map(function(i) { return <div key={"b" + i}>{renderConfirmSlot(boardCardArr[i], "board", i, true)}</div>; })}
+            </div>
+
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 8 }}>HERO POSITION</div>
+            <div style={{ display: "flex", gap: 4, marginBottom: 14, flexWrap: "wrap" }}>
+              {POSITIONS.map(function(p) {
+                var active = extracted.hero_position === p;
+                return (
+                  <button key={p} onClick={function() { updateExtracted("hero_position", p); }} style={{
+                    fontFamily: "var(--m)", fontSize: 13, fontWeight: 700, minWidth: 56,
+                    color: active ? "#000" : C.txm,
+                    background: active ? "linear-gradient(135deg," + C.gold + "," + C.goldL + ")" : "rgba(255,255,255,0.02)",
+                    border: "1px solid " + (active ? "transparent" : "rgba(255,255,255,0.06)"),
+                    borderRadius: 8, padding: "11px 14px", cursor: "pointer",
+                    boxShadow: active ? "0 2px 8px rgba(212,167,44,0.2)" : "none",
+                  }}>{p}</button>
+                );
+              })}
+            </div>
+
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 8 }}>VILLAIN POSITION</div>
+            <div style={{ display: "flex", gap: 4, marginBottom: 14, flexWrap: "wrap" }}>
+              {POSITIONS.map(function(p) {
+                var active = extracted.villain_position === p;
+                return (
+                  <button key={p} onClick={function() { updateExtracted("villain_position", p); }} style={{
+                    fontFamily: "var(--m)", fontSize: 13, fontWeight: 700, minWidth: 56,
+                    color: active ? "#000" : C.txm,
+                    background: active ? "rgba(212,168,83,0.85)" : "rgba(255,255,255,0.02)",
+                    border: "1px solid " + (active ? "transparent" : "rgba(255,255,255,0.06)"),
+                    borderRadius: 8, padding: "11px 14px", cursor: "pointer",
+                  }}>{p}</button>
+                );
+              })}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 6 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 6 }}>STACK (BB)</div>
+                <input value={extracted.effective_stack_bb || ""} onChange={function(e) { updateExtracted("effective_stack_bb", e.target.value); }} placeholder="100" style={{
+                  width: "100%", fontFamily: "var(--m)", fontSize: 16, color: C.txb,
+                  background: "rgba(255,255,255,0.02)", border: "1px solid " + C.border,
+                  borderRadius: 6, padding: "10px 12px", outline: "none", boxSizing: "border-box",
+                }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 6 }}>BLINDS</div>
+                <input value={extracted.blinds || ""} onChange={function(e) { updateExtracted("blinds", e.target.value); }} placeholder="5/10" style={{
+                  width: "100%", fontFamily: "var(--m)", fontSize: 16, color: C.txb,
+                  background: "rgba(255,255,255,0.02)", border: "1px solid " + C.border,
+                  borderRadius: 6, padding: "10px 12px", outline: "none", boxSizing: "border-box",
+                }} />
+              </div>
+            </div>
+
+            {extracted.streets && extracted.streets.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 8 }}>ACTION</div>
+                {extracted.streets.map(function(s, i) {
+                  return (
+                    <div key={i} style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: 10, fontFamily: "var(--m)", color: C.gold, marginBottom: 3 }}>{s.street}</div>
+                      <input
+                        value={s.action_summary || ""}
+                        onChange={function(e) {
+                          var streets = extracted.streets.slice();
+                          streets[i] = Object.assign({}, streets[i], { action_summary: e.target.value });
+                          updateExtracted("streets", streets);
+                        }}
+                        style={{
+                          width: "100%", fontFamily: "var(--m)", fontSize: 16, color: C.txb,
+                          background: "rgba(255,255,255,0.02)", border: "1px solid " + C.border,
+                          borderRadius: 6, padding: "10px 12px", outline: "none", boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Glass>
+
+          {picking && (
+            <Glass style={{ padding: 18, marginBottom: 12, animation: "fu 0.15s both" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: C.gold, fontFamily: "var(--m)" }}>
+                  {pickedRank ? "PICK A SUIT FOR " + pickedRank : "PICK A RANK"} \u2014 {picking.target === "hero" ? "HERO" : picking.target === "villain" ? "VILLAIN" : "BOARD"} {picking.target === "board" ? ["FLOP 1","FLOP 2","FLOP 3","TURN","RIVER"][picking.idx] : picking.idx === 0 ? "CARD 1" : "CARD 2"}
+                </div>
+                <button onClick={function() { setPicking(null); setPickedRank(null); }} style={{
+                  fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, color: C.txm,
+                  background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 6, padding: "5px 10px", cursor: "pointer",
+                }}>CANCEL</button>
+              </div>
+
+              {!pickedRank && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
+                  {EX_RANKS.map(function(r) {
+                    var anyAvailable = EX_SUITS.some(function(s) { return !usedCardsSet.has(r + s); });
+                    return (
+                      <button key={r} disabled={!anyAvailable} onClick={function() { setPickedRank(r); }} style={{
+                        height: 52, fontFamily: "var(--m)", fontSize: 20, fontWeight: 800, color: anyAvailable ? C.txb : C.txm,
+                        background: anyAvailable ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.015)",
+                        border: "1px solid " + (anyAvailable ? "rgba(255,255,255,0.08)" : "transparent"),
+                        borderRadius: 8, cursor: anyAvailable ? "pointer" : "default",
+                        opacity: anyAvailable ? 1 : 0.25, transition: "all 0.12s",
+                      }}>{r}</button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {pickedRank && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                  {EX_SUITS.map(function(suit) {
+                    var card = pickedRank + suit;
+                    var used = usedCardsSet.has(card);
+                    return (
+                      <button key={suit} disabled={used} onClick={function() { if (!used) pickCard(card); }} style={{
+                        height: 84, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
+                        fontFamily: "var(--m)",
+                        background: used ? "rgba(255,255,255,0.015)" : "rgba(255,255,255,0.04)",
+                        border: "2px solid " + (used ? "transparent" : EX_SUIT_CLR[suit] + "40"),
+                        borderRadius: 10, cursor: used ? "default" : "pointer",
+                        opacity: used ? 0.2 : 1, transition: "all 0.12s",
+                      }}>
+                        <span style={{ fontSize: 24, color: EX_SUIT_CLR[suit] }}>{EX_SUIT_SYM[suit]}</span>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: EX_SUIT_CLR[suit] }}>{pickedRank}{suit}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {pickedRank && (
+                <button onClick={function() { setPickedRank(null); }} style={{
+                  fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, color: C.txm,
+                  background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 6, padding: "8px 14px", cursor: "pointer", marginTop: 12,
+                }}>\u2190 BACK TO RANKS</button>
+              )}
+            </Glass>
+          )}
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={reset} style={{ flex: 1, padding: "14px", fontFamily: "var(--m)", fontSize: 12, fontWeight: 600, color: C.txm, background: "rgba(255,255,255,0.02)", border: "1px solid " + C.border, borderRadius: 8, cursor: "pointer" }}>START OVER</button>
+            <button onClick={confirmAndAnalyze} style={{ flex: 2, padding: "14px", fontFamily: "var(--f)", fontSize: 15, fontWeight: 700, color: "#000", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")", border: "none", borderRadius: 8, cursor: "pointer", boxShadow: "0 4px 14px rgba(212,167,44,0.2)" }}>{"Confirm & Analyze \u2192"}</button>
+          </div>
+        </div>
+      )}
+
+      {busy && extractPhase === "extracting" && <Loader steps={["Loading screenshot", "Identifying cards", "Reading positions", "Tracing action"]} />}
+      {busy && extractPhase === "analyzing" && <Loader steps={["Computing GTO", "Comparing to solver", "Grading decisions", "Building report"]} />}
+      {busy && extractPhase !== "extracting" && extractPhase !== "analyzing" && <Loader steps={["Working"]} />}
       {err && <div style={{ padding: 14, borderRadius: 10, fontSize: 14, color: C.red, background: C.red + "10", border: "1px solid " + C.red + "20", marginTop: 16 }}>{err}</div>}
       {data && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14, animation: "fu 0.35s both" }}>
