@@ -3645,6 +3645,110 @@ function DrillsPage(props) {
   );
 }
 
+var ADMIN_EMAILS = ["cameronimpemba@gmail.com"];
+
+function FeedbackInboxPage() {
+  var _rows = useState(null); var rows = _rows[0]; var setRows = _rows[1];
+  var _err = useState(""); var err = _err[0]; var setErr = _err[1];
+  var _filter = useState("all"); var filter = _filter[0]; var setFilter = _filter[1];
+
+  useEffect(function() {
+    if (!supabase) { setRows([]); return; }
+    supabase.from("feedback").select("*").order("created_at", { ascending: false }).limit(200)
+      .then(function(res) {
+        if (res.error) setErr(res.error.message);
+        else setRows(res.data || []);
+      });
+  }, []);
+
+  if (rows == null) return <Glass style={{ textAlign: "center", padding: 36, color: C.txm, fontFamily: "var(--m)", fontSize: 12 }}>LOADING FEEDBACK...</Glass>;
+  if (err) return <Glass style={{ padding: 20, color: C.red }}>{err}</Glass>;
+
+  var filtered = filter === "all" ? rows : rows.filter(function(r) { return r.rating === filter; });
+  var counts = { all: rows.length, love: 0, good: 0, meh: 0, bad: 0, none: 0 };
+  rows.forEach(function(r) {
+    if (r.rating && counts[r.rating] != null) counts[r.rating]++;
+    else if (!r.rating) counts.none++;
+  });
+
+  var ratingMeta = {
+    love: { emoji: "\uD83D\uDD25", color: C.gold, label: "Love" },
+    good: { emoji: "\uD83D\uDC4D", color: C.green, label: "Good" },
+    meh: { emoji: "\uD83D\uDE10", color: C.amber, label: "Meh" },
+    bad: { emoji: "\uD83D\uDC4E", color: C.red, label: "Broken" },
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 16 }}>
+        <span style={{ fontSize: 22, fontWeight: 300, color: C.txb, letterSpacing: "-0.02em" }}>Feedback Inbox</span>
+        <div style={{ fontSize: 12, fontFamily: "var(--m)", color: C.txm, marginTop: 2 }}>{rows.length} total \u00B7 admin view</div>
+      </div>
+
+      <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+        {[
+          { id: "all", label: "ALL", count: counts.all, color: C.txb },
+          { id: "love", label: "\uD83D\uDD25 LOVE", count: counts.love, color: C.gold },
+          { id: "good", label: "\uD83D\uDC4D GOOD", count: counts.good, color: C.green },
+          { id: "meh", label: "\uD83D\uDE10 MEH", count: counts.meh, color: C.amber },
+          { id: "bad", label: "\uD83D\uDC4E BROKEN", count: counts.bad, color: C.red },
+        ].map(function(f) {
+          var active = filter === f.id;
+          return (
+            <button key={f.id} onClick={function() { setFilter(f.id); }} style={{
+              fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em",
+              color: active ? "#000" : f.color,
+              background: active ? f.color : "rgba(255,255,255,0.02)",
+              border: "1px solid " + (active ? "transparent" : "rgba(255,255,255,0.06)"),
+              borderRadius: 6, padding: "7px 11px", cursor: "pointer",
+            }}>{f.label} <span style={{ opacity: 0.6, marginLeft: 4 }}>{f.count}</span></button>
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 ? (
+        <Glass style={{ textAlign: "center", padding: 36, color: C.txm }}>No feedback yet.</Glass>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {filtered.map(function(r) {
+            var meta = ratingMeta[r.rating];
+            var when = r.created_at ? new Date(r.created_at) : null;
+            var whenStr = when ? when.toLocaleString() : "";
+            return (
+              <Glass key={r.id} style={{ padding: 16 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 8 }}>
+                  {meta ? (
+                    <div style={{
+                      flexShrink: 0, width: 36, height: 36, borderRadius: 8,
+                      background: meta.color + "14", border: "1px solid " + meta.color + "30",
+                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
+                    }}>{meta.emoji}</div>
+                  ) : (
+                    <div style={{
+                      flexShrink: 0, width: 36, height: 36, borderRadius: 8,
+                      background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontFamily: "var(--m)", fontSize: 11, color: C.txm,
+                    }}>\u2014</div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, color: C.txb, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{r.message}</div>
+                    <div style={{ display: "flex", gap: 10, marginTop: 8, fontSize: 10, fontFamily: "var(--m)", color: C.txm, flexWrap: "wrap" }}>
+                      <span>{r.email || "anonymous"}</span>
+                      {r.page && <span>\u00B7 page: <span style={{ color: C.gold }}>{r.page}</span></span>}
+                      <span>\u00B7 {whenStr}</span>
+                    </div>
+                  </div>
+                </div>
+              </Glass>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HelpPage() {
   var items = [
     ["Study", "Browse GTO opening ranges by position. The 13\u00D713 matrix shows every hand combo color-coded."],
@@ -4580,6 +4684,11 @@ export default function App() {
     { id: "help", icon: Ic.help, t: "Help", d: "Tips & tricks" },
   ];
 
+  var isAdmin = !!(auth.user && auth.user.email && ADMIN_EMAILS.indexOf(auth.user.email.toLowerCase()) >= 0);
+  if (isAdmin) {
+    nav.push({ id: "feedback", icon: Ic.help, t: "Feedback", d: "User feedback inbox" });
+  }
+
   var topNav = nav.slice(0, 8);
   var moreNav = nav.slice(8);
   var accents = [C.gold, C.green, C.amber, C.blue, C.blue, C.green, C.green, C.amber, C.gold, C.green, C.txm];
@@ -4732,6 +4841,7 @@ export default function App() {
           {pg === "reports" && <ReportsPage />}
           {pg === "drills" && <DrillsPage onGo={go} />}
           {pg === "help" && <HelpPage />}
+          {pg === "feedback" && isAdmin && <FeedbackInboxPage />}
         </div>
       )}
 
