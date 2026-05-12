@@ -1890,6 +1890,7 @@ function UploadsPage(props) {
   var _extracted = useState(null); var extracted = _extracted[0]; var setExtracted = _extracted[1];
   var _extractPhase = useState("idle"); var extractPhase = _extractPhase[0]; var setExtractPhase = _extractPhase[1];
   var _picking = useState(null); var picking = _picking[0]; var setPicking = _picking[1];
+  var _pickedRank = useState(null); var pickedRank = _pickedRank[0]; var setPickedRank = _pickedRank[1];
   var ref = useRef(null);
 
   useEffect(function() {
@@ -1952,7 +1953,7 @@ function UploadsPage(props) {
     });
   };
 
-  var reset = function() { setImg(null); setB64(null); setData(null); setErr(null); setFromHistory(false); setExtracted(null); setExtractPhase("idle"); setPicking(null); };
+  var reset = function() { setImg(null); setB64(null); setData(null); setErr(null); setFromHistory(false); setExtracted(null); setExtractPhase("idle"); setPicking(null); setPickedRank(null); };
 
   var parseHand = function(s) {
     if (!s || typeof s !== "string") return [];
@@ -1960,16 +1961,24 @@ function UploadsPage(props) {
   };
   var heroCardArr = extracted ? parseHand(extracted.hero_cards) : [];
   while (heroCardArr.length < 2) heroCardArr.push(null);
+  var villainCardArr = extracted ? parseHand(extracted.villain_cards) : [];
+  while (villainCardArr.length < 2) villainCardArr.push(null);
   var boardCardArr = extracted ? parseHand(extracted.community_cards) : [];
   while (boardCardArr.length < 5) boardCardArr.push(null);
   var usedCardsSet = new Set();
   heroCardArr.forEach(function(c) { if (c) usedCardsSet.add(c); });
+  villainCardArr.forEach(function(c) { if (c) usedCardsSet.add(c); });
   boardCardArr.forEach(function(c) { if (c) usedCardsSet.add(c); });
 
   var setHeroCard = function(idx, card) {
     var arr = heroCardArr.slice();
     arr[idx] = card;
     updateExtracted("hero_cards", arr.filter(function(c) { return c; }).join(" "));
+  };
+  var setVillainCard = function(idx, card) {
+    var arr = villainCardArr.slice();
+    arr[idx] = card;
+    updateExtracted("villain_cards", arr.filter(function(c) { return c; }).join(" "));
   };
   var setBoardCard = function(idx, card) {
     var arr = boardCardArr.slice();
@@ -1979,11 +1988,13 @@ function UploadsPage(props) {
   var pickCard = function(card) {
     if (!picking) return;
     if (picking.target === "hero") setHeroCard(picking.idx, card);
+    else if (picking.target === "villain") setVillainCard(picking.idx, card);
     else setBoardCard(picking.idx, card);
-    setPicking(null);
+    setPicking(null); setPickedRank(null);
   };
   var clearCard = function(target, idx) {
     if (target === "hero") setHeroCard(idx, null);
+    else if (target === "villain") setVillainCard(idx, null);
     else setBoardCard(idx, null);
   };
 
@@ -2090,6 +2101,14 @@ function UploadsPage(props) {
               {[0, 1].map(function(i) { return <div key={"h" + i}>{renderConfirmSlot(heroCardArr[i], "hero", i, false)}</div>; })}
             </div>
 
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)" }}>VILLAIN CARDS</div>
+              <div style={{ fontSize: 9, color: C.txm, fontFamily: "var(--m)", opacity: 0.6 }}>(only if shown at showdown)</div>
+            </div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
+              {[0, 1].map(function(i) { return <div key={"v" + i}>{renderConfirmSlot(villainCardArr[i], "villain", i, false)}</div>; })}
+            </div>
+
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 8 }}>BOARD</div>
             <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
               {[0, 1, 2, 3, 4].map(function(i) { return <div key={"b" + i}>{renderConfirmSlot(boardCardArr[i], "board", i, true)}</div>; })}
@@ -2101,11 +2120,11 @@ function UploadsPage(props) {
                 var active = extracted.hero_position === p;
                 return (
                   <button key={p} onClick={function() { updateExtracted("hero_position", p); }} style={{
-                    fontFamily: "var(--m)", fontSize: 11, fontWeight: 700,
+                    fontFamily: "var(--m)", fontSize: 13, fontWeight: 700, minWidth: 56,
                     color: active ? "#000" : C.txm,
                     background: active ? "linear-gradient(135deg," + C.gold + "," + C.goldL + ")" : "rgba(255,255,255,0.02)",
                     border: "1px solid " + (active ? "transparent" : "rgba(255,255,255,0.06)"),
-                    borderRadius: 6, padding: "7px 12px", cursor: "pointer",
+                    borderRadius: 8, padding: "11px 14px", cursor: "pointer",
                     boxShadow: active ? "0 2px 8px rgba(212,167,44,0.2)" : "none",
                   }}>{p}</button>
                 );
@@ -2118,11 +2137,11 @@ function UploadsPage(props) {
                 var active = extracted.villain_position === p;
                 return (
                   <button key={p} onClick={function() { updateExtracted("villain_position", p); }} style={{
-                    fontFamily: "var(--m)", fontSize: 11, fontWeight: 700,
+                    fontFamily: "var(--m)", fontSize: 13, fontWeight: 700, minWidth: 56,
                     color: active ? "#000" : C.txm,
                     background: active ? "rgba(212,168,83,0.85)" : "rgba(255,255,255,0.02)",
                     border: "1px solid " + (active ? "transparent" : "rgba(255,255,255,0.06)"),
-                    borderRadius: 6, padding: "7px 12px", cursor: "pointer",
+                    borderRadius: 8, padding: "11px 14px", cursor: "pointer",
                   }}>{p}</button>
                 );
               })}
@@ -2132,17 +2151,17 @@ function UploadsPage(props) {
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 6 }}>STACK (BB)</div>
                 <input value={extracted.effective_stack_bb || ""} onChange={function(e) { updateExtracted("effective_stack_bb", e.target.value); }} placeholder="100" style={{
-                  width: "100%", fontFamily: "var(--m)", fontSize: 13, color: C.txb,
+                  width: "100%", fontFamily: "var(--m)", fontSize: 16, color: C.txb,
                   background: "rgba(255,255,255,0.02)", border: "1px solid " + C.border,
-                  borderRadius: 6, padding: "8px 10px", outline: "none", boxSizing: "border-box",
+                  borderRadius: 6, padding: "10px 12px", outline: "none", boxSizing: "border-box",
                 }} />
               </div>
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 6 }}>BLINDS</div>
                 <input value={extracted.blinds || ""} onChange={function(e) { updateExtracted("blinds", e.target.value); }} placeholder="5/10" style={{
-                  width: "100%", fontFamily: "var(--m)", fontSize: 13, color: C.txb,
+                  width: "100%", fontFamily: "var(--m)", fontSize: 16, color: C.txb,
                   background: "rgba(255,255,255,0.02)", border: "1px solid " + C.border,
-                  borderRadius: 6, padding: "8px 10px", outline: "none", boxSizing: "border-box",
+                  borderRadius: 6, padding: "10px 12px", outline: "none", boxSizing: "border-box",
                 }} />
               </div>
             </div>
@@ -2162,9 +2181,9 @@ function UploadsPage(props) {
                           updateExtracted("streets", streets);
                         }}
                         style={{
-                          width: "100%", fontFamily: "var(--m)", fontSize: 12, color: C.txb,
+                          width: "100%", fontFamily: "var(--m)", fontSize: 16, color: C.txb,
                           background: "rgba(255,255,255,0.02)", border: "1px solid " + C.border,
-                          borderRadius: 6, padding: "8px 10px", outline: "none", boxSizing: "border-box",
+                          borderRadius: 6, padding: "10px 12px", outline: "none", boxSizing: "border-box",
                         }}
                       />
                     </div>
@@ -2175,43 +2194,64 @@ function UploadsPage(props) {
           </Glass>
 
           {picking && (
-            <Glass style={{ padding: 16, marginBottom: 12, animation: "fu 0.15s both" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.gold, fontFamily: "var(--m)", marginBottom: 14 }}>
-                SELECT CARD \u2014 {picking.target === "hero" ? "HERO" : "BOARD"} {picking.target === "board" ? ["Flop 1","Flop 2","Flop 3","Turn","River"][picking.idx] : picking.idx === 0 ? "Card 1" : "Card 2"}
+            <Glass style={{ padding: 18, marginBottom: 12, animation: "fu 0.15s both" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: C.gold, fontFamily: "var(--m)" }}>
+                  {pickedRank ? "PICK A SUIT FOR " + pickedRank : "PICK A RANK"} \u2014 {picking.target === "hero" ? "HERO" : picking.target === "villain" ? "VILLAIN" : "BOARD"} {picking.target === "board" ? ["FLOP 1","FLOP 2","FLOP 3","TURN","RIVER"][picking.idx] : picking.idx === 0 ? "CARD 1" : "CARD 2"}
+                </div>
+                <button onClick={function() { setPicking(null); setPickedRank(null); }} style={{
+                  fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, color: C.txm,
+                  background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 6, padding: "5px 10px", cursor: "pointer",
+                }}>CANCEL</button>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "28px repeat(13, 1fr)", gap: 3, marginBottom: 3 }}>
-                <div />
-                {EX_RANKS.map(function(r) {
-                  return <div key={r} style={{ textAlign: "center", fontSize: 10, fontWeight: 700, color: C.txm, fontFamily: "var(--m)" }}>{r}</div>;
-                })}
-              </div>
-              {EX_SUITS.map(function(suit) {
-                return (
-                  <div key={suit} style={{ display: "grid", gridTemplateColumns: "28px repeat(13, 1fr)", gap: 3, marginBottom: 3 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: EX_SUIT_CLR[suit] }}>{EX_SUIT_SYM[suit]}</div>
-                    {EX_RANKS.map(function(rank) {
-                      var card = rank + suit;
-                      var used = usedCardsSet.has(card);
-                      return (
-                        <div key={card} onClick={function() { if (!used) pickCard(card); }} style={{
-                          height: 32, display: "flex", alignItems: "center", justifyContent: "center",
-                          borderRadius: 5, cursor: used ? "default" : "pointer",
-                          background: used ? "rgba(255,255,255,0.015)" : "rgba(255,255,255,0.04)",
-                          border: used ? "1px solid transparent" : "1px solid rgba(255,255,255,0.08)",
-                          opacity: used ? 0.15 : 1, transition: "all 0.12s",
-                        }}>
-                          <span style={{ fontSize: 12, fontWeight: 800, color: EX_SUIT_CLR[suit], fontFamily: "var(--m)" }}>{rank}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-              <button onClick={function() { setPicking(null); }} style={{
-                fontFamily: "var(--m)", fontSize: 10, fontWeight: 600, color: C.txm,
-                background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 6, padding: "6px 14px", cursor: "pointer", marginTop: 8,
-              }}>Cancel</button>
+
+              {!pickedRank && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
+                  {EX_RANKS.map(function(r) {
+                    var anyAvailable = EX_SUITS.some(function(s) { return !usedCardsSet.has(r + s); });
+                    return (
+                      <button key={r} disabled={!anyAvailable} onClick={function() { setPickedRank(r); }} style={{
+                        height: 52, fontFamily: "var(--m)", fontSize: 20, fontWeight: 800, color: anyAvailable ? C.txb : C.txm,
+                        background: anyAvailable ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.015)",
+                        border: "1px solid " + (anyAvailable ? "rgba(255,255,255,0.08)" : "transparent"),
+                        borderRadius: 8, cursor: anyAvailable ? "pointer" : "default",
+                        opacity: anyAvailable ? 1 : 0.25, transition: "all 0.12s",
+                      }}>{r}</button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {pickedRank && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                  {EX_SUITS.map(function(suit) {
+                    var card = pickedRank + suit;
+                    var used = usedCardsSet.has(card);
+                    return (
+                      <button key={suit} disabled={used} onClick={function() { if (!used) pickCard(card); }} style={{
+                        height: 84, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
+                        fontFamily: "var(--m)",
+                        background: used ? "rgba(255,255,255,0.015)" : "rgba(255,255,255,0.04)",
+                        border: "2px solid " + (used ? "transparent" : EX_SUIT_CLR[suit] + "40"),
+                        borderRadius: 10, cursor: used ? "default" : "pointer",
+                        opacity: used ? 0.2 : 1, transition: "all 0.12s",
+                      }}>
+                        <span style={{ fontSize: 24, color: EX_SUIT_CLR[suit] }}>{EX_SUIT_SYM[suit]}</span>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: EX_SUIT_CLR[suit] }}>{pickedRank}{suit}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {pickedRank && (
+                <button onClick={function() { setPickedRank(null); }} style={{
+                  fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, color: C.txm,
+                  background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 6, padding: "8px 14px", cursor: "pointer", marginTop: 12,
+                }}>\u2190 BACK TO RANKS</button>
+              )}
             </Glass>
           )}
 
