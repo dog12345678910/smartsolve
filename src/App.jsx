@@ -608,11 +608,14 @@ function mkGrid(rs) {
 
 var SYS_PROMPT = "You are an expert Texas Hold'em poker analyst. You can read screenshots from ANY poker client including: ClubWPT Gold (web-based, sweepstakes, Chips currency — treat Chips as dollar amounts), PokerStars, GGPoker, WPN/ACR, 888, PartyPoker, ClubGG, Ignition, BetOnline, and any other poker site or app. For ClubWPT Gold specifically: chips are displayed as 'SC' (Sweeps Coins) or plain numbers, the hero seat is highlighted, cards are shown face-up for hero, and the table layout may be portrait-oriented. Read all visible information: hero cards, board cards, pot size, bet sizes, player positions, stack sizes, and action history. Respond ONLY in valid JSON (no markdown, no backticks). Structure: {\"hero_position\":\"BTN\",\"villain_position\":\"BB\",\"hero_cards\":\"Ah Kd\",\"villain_cards\":\"unknown\",\"community_cards\":\"8s 5s 2h Ts 8h\",\"final_pot\":\"860\",\"blinds\":\"5/10\",\"result\":\"Hero wins\",\"streets\":[{\"street\":\"Preflop\",\"board\":\"\",\"pot_at_start\":\"15\",\"action_summary\":\"Hero raises to 25, BB calls\",\"hero_actual_action\":\"Raise to 25\",\"gto_actions\":[{\"action\":\"Raise\",\"freq\":85,\"ev\":2.1,\"color\":\"#d4a72c\"},{\"action\":\"Call\",\"freq\":12,\"ev\":0.8,\"color\":\"#5b8def\"},{\"action\":\"Fold\",\"freq\":3,\"ev\":0,\"color\":\"#4a4a4a\"}],\"hero_chose\":\"Raise\",\"best_action\":\"Raise\",\"best_sizing\":\"2.5x\",\"reasoning\":\"Standard open\",\"verdict\":\"Best\",\"ev_loss\":0}],\"overall\":{\"grade\":\"A\",\"ev_lost\":0.5,\"summary\":\"Well played\",\"mistake\":\"None\",\"strength\":\"Good sizing\",\"takeaway\":\"Keep exploiting position\"}} Rules: gto_actions freq sum to 100. color: #d4a72c raise/bet, #4caf7d check, #5b8def call, #4a4a4a fold. verdict: Best/Good/Inaccurate/Mistake/Blunder.";
 
-async function askAI(content) {
+var EXTRACT_PROMPT = "You read a poker hand screenshot and return ONLY the table state as JSON. No analysis, no commentary. Distinguish T from 7 carefully: T is shown as 'T' or '10' with a flat top stroke; 7 has an angled descender. Distinguish spades/clubs (both black) and hearts/diamonds (both red) by shape. If a field is unclear, set it to \"unknown\" — do NOT guess. Return JSON only, no markdown. Schema: {\"hero_cards\":\"Ah Kd\",\"hero_position\":\"CO\",\"villain_position\":\"BB\",\"effective_stack_bb\":100,\"blinds\":\"5/10\",\"final_pot\":\"120\",\"community_cards\":\"Qd Js 7c\",\"streets\":[{\"street\":\"Preflop\",\"board\":\"\",\"action_summary\":\"Hero opens 2.5x, BB calls\",\"hero_actual_action\":\"Raise 2.5x\"}],\"confidence\":{\"hero_cards\":\"high\",\"hero_position\":\"high\",\"community_cards\":\"high\",\"streets\":\"med\"}}. Use card notation like 'Ah Kd' (rank + lowercase suit: h/d/c/s). Position values: UTG, MP, CO, BTN, SB, BB, or unknown. Stack as integer big blinds. Confidence: low/med/high per field.";
+
+async function askAI(content, opts) {
+  opts = opts || {};
   var body = {
-    model: "claude-sonnet-4-6",
-    max_tokens: 4096,
-    system: SYS_PROMPT,
+    model: opts.model || "claude-sonnet-4-6",
+    max_tokens: opts.max_tokens || 4096,
+    system: opts.system || SYS_PROMPT,
     messages: [{ role: "user", content: content }],
   };
 
@@ -1884,6 +1887,8 @@ function UploadsPage(props) {
   var _drag = useState(false); var drag = _drag[0]; var setDrag = _drag[1];
   var _fromHistory = useState(!!viewHand); var fromHistory = _fromHistory[0]; var setFromHistory = _fromHistory[1];
   var _refExpanded = useState(false); var refExpanded = _refExpanded[0]; var setRefExpanded = _refExpanded[1];
+  var _extracted = useState(null); var extracted = _extracted[0]; var setExtracted = _extracted[1];
+  var _extractPhase = useState("idle"); var extractPhase = _extractPhase[0]; var setExtractPhase = _extractPhase[1];
   var ref = useRef(null);
 
   useEffect(function() {
@@ -1905,23 +1910,53 @@ function UploadsPage(props) {
 
   var drop = useCallback(function(e) { e.preventDefault(); setDrag(false); load(e.dataTransfer.files[0]); }, [load]);
 
-  var run = async function() {
-    if (!b64) return; setBusy(true); setErr(null); setData(null);
+  var extract = async function() {
+    if (!b64) return;
+    setBusy(true); setErr(null); setData(null); setExtracted(null);
+    setExtractPhase("extracting");
     try {
       var d = await askAI([
         { type: "image", source: { type: "base64", media_type: mime, data: b64 } },
-        { type: "text", text: "Analyze this poker hand screenshot. Identify the poker client (ClubWPT Gold, PokerStars, GGPoker, etc). Read hero cards, board, pot, bets, positions, and all action. Give full GTO breakdown with frequencies and verdicts per street." },
-      ]);
-      setData(d); setSt(0); if (onResult) onResult(d);
-    } catch (e) { setErr(e.message); } finally { setBusy(false); }
+        { type: "text", text: "Read this poker hand screenshot and return the table state as JSON only." },
+      ], { model: "claude-opus-4-7", system: EXTRACT_PROMPT, max_tokens: 1500 });
+      setExtracted(d);
+      setExtractPhase("confirm");
+    } catch (e) {
+      setErr(e.message); setExtractPhase("idle");
+    } finally { setBusy(false); }
   };
 
-  var reset = function() { setImg(null); setB64(null); setData(null); setErr(null); setFromHistory(false); };
+  var confirmAndAnalyze = async function() {
+    if (!extracted) return;
+    setBusy(true); setErr(null); setData(null);
+    setExtractPhase("analyzing");
+    try {
+      var verifiedText = "Analyze this poker hand. The cards and action have already been verified by the user — use this as ground truth:\n\n" + JSON.stringify(extracted, null, 2) + "\n\nGive a full GTO breakdown with frequencies and verdicts per street.";
+      var d = await askAI([
+        { type: "text", text: verifiedText },
+      ]);
+      if (extracted.hero_cards && !d.hero_cards) d.hero_cards = extracted.hero_cards;
+      if (extracted.hero_position && !d.hero_position) d.hero_position = extracted.hero_position;
+      if (extracted.villain_position && !d.villain_position) d.villain_position = extracted.villain_position;
+      if (extracted.community_cards && !d.community_cards) d.community_cards = extracted.community_cards;
+      setData(d); setSt(0); setExtractPhase("done"); if (onResult) onResult(d);
+    } catch (e) { setErr(e.message); setExtractPhase("confirm"); } finally { setBusy(false); }
+  };
+
+  var updateExtracted = function(field, value) {
+    setExtracted(function(e) {
+      var next = Object.assign({}, e);
+      next[field] = value;
+      return next;
+    });
+  };
+
+  var reset = function() { setImg(null); setB64(null); setData(null); setErr(null); setFromHistory(false); setExtracted(null); setExtractPhase("idle"); };
   var street = data && data.streets ? data.streets[st] : null;
 
   return (
     <div>
-      {!data && !busy && (
+      {!data && !busy && !extracted && (
         <div>
           {!img ? (
             <div
@@ -1954,13 +1989,89 @@ function UploadsPage(props) {
               </div>
               <div style={{ display: "flex", borderTop: "1px solid " + C.border }}>
                 <button onClick={reset} style={{ flex: 1, padding: 16, fontSize: 14, fontFamily: "var(--f)", color: C.txm, background: "transparent", border: "none", borderRight: "1px solid " + C.border, cursor: "pointer" }}>Clear</button>
-                <button onClick={run} style={{ flex: 2, padding: 16, fontSize: 15, fontWeight: 700, fontFamily: "var(--f)", color: "#000", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")", border: "none", cursor: "pointer" }}>{"Analyze \u2192"}</button>
+                <button onClick={extract} style={{ flex: 2, padding: 16, fontSize: 15, fontWeight: 700, fontFamily: "var(--f)", color: "#000", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")", border: "none", cursor: "pointer" }}>{"Read Screenshot \u2192"}</button>
               </div>
             </Glass>
           )}
         </div>
       )}
-      {busy && <Loader steps={["Reading screenshot", "Identifying cards", "Tracing action", "Computing GTO", "Grading decisions"]} />}
+
+      {!data && !busy && extracted && (
+        <div style={{ animation: "fu 0.25s both" }}>
+          {img && (
+            <Glass style={{ overflow: "hidden", padding: 0, marginBottom: 12 }}>
+              <div style={{ background: C.bg, display: "flex", justifyContent: "center", padding: 4 }}>
+                <img src={img} alt="" style={{ maxWidth: "100%", maxHeight: 220, objectFit: "contain", display: "block", borderRadius: 10 }} />
+              </div>
+            </Glass>
+          )}
+          <Glass style={{ padding: 18, marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: C.gold, fontFamily: "var(--m)" }}>CONFIRM WHAT WE READ</div>
+              <div style={{ fontSize: 10, color: C.txm, fontFamily: "var(--m)" }}>Tap any field to fix it</div>
+            </div>
+            {[
+              { k: "hero_cards", label: "Hero Cards", placeholder: "Ah Kd" },
+              { k: "hero_position", label: "Hero Position", placeholder: "CO" },
+              { k: "villain_position", label: "Villain Position", placeholder: "BB" },
+              { k: "community_cards", label: "Board", placeholder: "Qd Js 7c" },
+              { k: "effective_stack_bb", label: "Stack (bb)", placeholder: "100" },
+              { k: "blinds", label: "Blinds", placeholder: "5/10" },
+            ].map(function(f) {
+              var val = extracted[f.k];
+              if (val == null) val = "";
+              return (
+                <div key={f.k} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid " + C.border }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: C.txm, fontFamily: "var(--m)", width: 110, flexShrink: 0 }}>{f.label}</div>
+                  <input
+                    value={val}
+                    onChange={function(e) { updateExtracted(f.k, e.target.value); }}
+                    placeholder={f.placeholder}
+                    style={{
+                      flex: 1, fontFamily: "var(--m)", fontSize: 13, color: C.txb,
+                      background: "transparent", border: "none", outline: "none",
+                      padding: "4px 0",
+                    }}
+                  />
+                </div>
+              );
+            })}
+            {extracted.streets && extracted.streets.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: C.txm, fontFamily: "var(--m)", marginBottom: 8 }}>ACTION</div>
+                {extracted.streets.map(function(s, i) {
+                  return (
+                    <div key={i} style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: 10, fontFamily: "var(--m)", color: C.gold, marginBottom: 3 }}>{s.street}</div>
+                      <input
+                        value={s.action_summary || ""}
+                        onChange={function(e) {
+                          var streets = extracted.streets.slice();
+                          streets[i] = Object.assign({}, streets[i], { action_summary: e.target.value });
+                          updateExtracted("streets", streets);
+                        }}
+                        style={{
+                          width: "100%", fontFamily: "var(--m)", fontSize: 12, color: C.txb,
+                          background: "rgba(255,255,255,0.02)", border: "1px solid " + C.border,
+                          borderRadius: 6, padding: "8px 10px", outline: "none", boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Glass>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={reset} style={{ flex: 1, padding: "14px", fontFamily: "var(--m)", fontSize: 12, fontWeight: 600, color: C.txm, background: "rgba(255,255,255,0.02)", border: "1px solid " + C.border, borderRadius: 8, cursor: "pointer" }}>START OVER</button>
+            <button onClick={confirmAndAnalyze} style={{ flex: 2, padding: "14px", fontFamily: "var(--f)", fontSize: 15, fontWeight: 700, color: "#000", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")", border: "none", borderRadius: 8, cursor: "pointer", boxShadow: "0 4px 14px rgba(212,167,44,0.2)" }}>{"Confirm & Analyze \u2192"}</button>
+          </div>
+        </div>
+      )}
+
+      {busy && extractPhase === "extracting" && <Loader steps={["Loading screenshot", "Identifying cards", "Reading positions", "Tracing action"]} />}
+      {busy && extractPhase === "analyzing" && <Loader steps={["Computing GTO", "Comparing to solver", "Grading decisions", "Building report"]} />}
+      {busy && extractPhase !== "extracting" && extractPhase !== "analyzing" && <Loader steps={["Working"]} />}
       {err && <div style={{ padding: 14, borderRadius: 10, fontSize: 14, color: C.red, background: C.red + "10", border: "1px solid " + C.red + "20", marginTop: 16 }}>{err}</div>}
       {data && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14, animation: "fu 0.35s both" }}>
