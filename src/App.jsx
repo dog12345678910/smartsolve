@@ -3669,6 +3669,134 @@ function HelpPage() {
 
 /* MAIN APP */
 /* MAIN APP */
+function FeedbackButton(props) {
+  var user = props.user;
+  var page = props.page;
+  var _open = useState(false); var open = _open[0]; var setOpen = _open[1];
+  var _msg = useState(""); var msg = _msg[0]; var setMsg = _msg[1];
+  var _rating = useState(null); var rating = _rating[0]; var setRating = _rating[1];
+  var _busy = useState(false); var busy = _busy[0]; var setBusy = _busy[1];
+  var _sent = useState(false); var sent = _sent[0]; var setSent = _sent[1];
+  var _err = useState(""); var err = _err[0]; var setErr = _err[1];
+
+  var submit = async function() {
+    if (!msg.trim()) { setErr("Tell us something."); return; }
+    setBusy(true); setErr("");
+    try {
+      if (supabase) {
+        var row = {
+          message: msg.trim(),
+          rating: rating,
+          page: page || null,
+          user_id: user ? user.id : null,
+          email: user ? user.email : null,
+          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+        };
+        var resp = await supabase.from("feedback").insert(row);
+        if (resp.error) throw new Error(resp.error.message);
+      }
+      setSent(true);
+      setTimeout(function() {
+        setOpen(false); setSent(false); setMsg(""); setRating(null);
+      }, 1800);
+    } catch (e) {
+      setErr(e.message || "Couldn't send. Try again.");
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <>
+      <button onClick={function() { setOpen(true); }} title="Send feedback" style={{
+        position: "fixed", right: 18, bottom: 18, zIndex: 40,
+        width: 52, height: 52, borderRadius: "50%",
+        background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+        border: "none", cursor: "pointer",
+        boxShadow: "0 6px 20px rgba(212,167,44,0.4), 0 2px 6px rgba(0,0,0,0.3)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" stroke="#1a1630" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div onClick={function() { if (!busy) setOpen(false); }} style={{
+          position: "fixed", inset: 0, zIndex: 50,
+          background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)",
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+        }}>
+          <div onClick={function(e) { e.stopPropagation(); }} style={{
+            width: "100%", maxWidth: 460,
+            background: "linear-gradient(180deg, #14151f, #0e0f17)",
+            border: "1px solid rgba(212,167,44,0.18)", borderRadius: 14,
+            padding: 22, animation: "fu 0.2s both", fontFamily: "var(--f)",
+          }}>
+            {!sent ? (
+              <>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", color: C.gold, fontFamily: "var(--m)" }}>SEND FEEDBACK</div>
+                  <button onClick={function() { if (!busy) setOpen(false); }} style={{
+                    fontFamily: "var(--m)", fontSize: 11, color: C.txm,
+                    background: "transparent", border: "none", cursor: "pointer", padding: 4,
+                  }}>×</button>
+                </div>
+                <p style={{ fontSize: 13, color: C.tx, lineHeight: 1.55, marginBottom: 16 }}>What's working? What's broken? Anything you'd change?</p>
+                <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                  {[
+                    { v: "love", emoji: "🔥", label: "Love it" },
+                    { v: "good", emoji: "👍", label: "Good" },
+                    { v: "meh", emoji: "😐", label: "Meh" },
+                    { v: "bad", emoji: "👎", label: "Broken" },
+                  ].map(function(r) {
+                    var active = rating === r.v;
+                    return (
+                      <button key={r.v} onClick={function() { setRating(r.v); }} style={{
+                        flex: 1, padding: "12px 6px",
+                        background: active ? "rgba(212,167,44,0.10)" : "rgba(255,255,255,0.02)",
+                        border: "1px solid " + (active ? C.gold + "60" : "rgba(255,255,255,0.06)"),
+                        borderRadius: 8, cursor: "pointer", fontFamily: "var(--f)",
+                        display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+                      }}>
+                        <span style={{ fontSize: 20 }}>{r.emoji}</span>
+                        <span style={{ fontSize: 10, color: active ? C.gold : C.txm, fontFamily: "var(--m)", fontWeight: 700, letterSpacing: "0.04em" }}>{r.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <textarea
+                  value={msg}
+                  onChange={function(e) { setMsg(e.target.value); }}
+                  placeholder="Type your feedback..."
+                  rows={4}
+                  style={{
+                    width: "100%", fontFamily: "var(--f)", fontSize: 16, color: C.txb,
+                    background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 8, padding: "12px 14px", outline: "none", resize: "vertical",
+                    boxSizing: "border-box", marginBottom: 12,
+                  }}
+                />
+                {err && <div style={{ fontSize: 12, color: C.red, marginBottom: 10, fontFamily: "var(--m)" }}>{err}</div>}
+                <button onClick={submit} disabled={busy} style={{
+                  width: "100%", padding: "13px", fontFamily: "var(--f)", fontSize: 14, fontWeight: 700, color: "#000",
+                  background: busy ? "rgba(212,167,44,0.4)" : "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+                  border: "none", borderRadius: 8, cursor: busy ? "default" : "pointer",
+                  boxShadow: "0 4px 14px rgba(212,167,44,0.25)",
+                }}>{busy ? "Sending..." : "Send"}</button>
+              </>
+            ) : (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🙏</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: C.txb, marginBottom: 4 }}>Thanks — heard you.</div>
+                <div style={{ fontSize: 12, color: C.txm }}>Every note gets read.</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 var landingCss = "\
 .ss-landing { --bg: #07080c; --bg1: #0c0d14; --bg2: #11131c; --gold: #d4a72c; --goldL: #e8c34a; --goldD: #b8922a; --raise: #4caf7d; --threebet: #e8c34a; --call: #5b8def; --fold: #d45555; --tx: #b8b4aa; --txb: #eae6dd; --txm: #5a576a; --txd: #2a2935; --f: 'DM Sans', system-ui, sans-serif; --m: 'JetBrains Mono', 'SF Mono', monospace; --border: rgba(255,255,255,0.05); --borderH: rgba(212,167,44,0.18); --glass: rgba(255,255,255,0.018); }\
 .ss-landing, .ss-landing *, .ss-landing *::before, .ss-landing *::after { margin: 0; padding: 0; box-sizing: border-box; }\
@@ -4607,6 +4735,7 @@ export default function App() {
         </div>
       )}
 
+      <FeedbackButton user={auth.user} page={pg} />
       <style>{"@keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}.sp{animation:sp .6s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}::selection{background:rgba(212,167,44,.25)}*{box-sizing:border-box;margin:0;padding:0}textarea:focus{border-color:rgba(212,167,44,.4)!important}button:active{transform:scale(.98)!important}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.06);border-radius:3px}"}</style>
       <Analytics />
     </div>
