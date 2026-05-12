@@ -3787,17 +3787,23 @@ function FeedbackButton(props) {
     if (!msg.trim()) { setErr("Tell us something."); return; }
     setBusy(true); setErr("");
     try {
-      if (supabase) {
-        var row = {
-          message: msg.trim(),
-          rating: rating,
-          page: page || null,
-          user_id: user ? user.id : null,
-          email: user ? user.email : null,
-          user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
-        };
-        var resp = await supabase.from("feedback").insert(row);
-        if (resp.error) throw new Error(resp.error.message);
+      var payload = {
+        message: msg.trim(),
+        rating: rating,
+        page: page || null,
+        user_id: user ? user.id : null,
+        email: user ? user.email : null,
+        user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+      };
+      var r = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) {
+        var detail = "";
+        try { var j = await r.json(); detail = j && j.error ? j.error : ""; } catch (_) {}
+        throw new Error(detail || "Couldn't send. Try again.");
       }
       setSent(true);
       setTimeout(function() {
