@@ -2109,6 +2109,68 @@ function UploadsPage(props) {
               {[0, 1].map(function(i) { return <div key={"v" + i}>{renderConfirmSlot(villainCardArr[i], "villain", i, false)}</div>; })}
             </div>
 
+            {picking && (
+              <div style={{ padding: 14, marginBottom: 18, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, animation: "fu 0.15s both" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: C.gold, fontFamily: "var(--m)" }}>
+                    {pickedRank ? "PICK A SUIT FOR " + pickedRank : "PICK A RANK"} {"—"} {picking.target === "hero" ? "HERO" : picking.target === "villain" ? "VILLAIN" : "BOARD"} {picking.target === "board" ? ["FLOP 1","FLOP 2","FLOP 3","TURN","RIVER"][picking.idx] : picking.idx === 0 ? "CARD 1" : "CARD 2"}
+                  </div>
+                  <button onClick={function() { setPicking(null); setPickedRank(null); }} style={{
+                    fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, color: C.txm,
+                    background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 6, padding: "5px 10px", cursor: "pointer",
+                  }}>CANCEL</button>
+                </div>
+
+                {!pickedRank && (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
+                    {EX_RANKS.map(function(r) {
+                      var anyAvailable = EX_SUITS.some(function(s) { return !usedCardsSet.has(r + s); });
+                      return (
+                        <button key={r} disabled={!anyAvailable} onClick={function() { setPickedRank(r); }} style={{
+                          height: 52, fontFamily: "var(--m)", fontSize: 20, fontWeight: 800, color: anyAvailable ? C.txb : C.txm,
+                          background: anyAvailable ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.015)",
+                          border: "1px solid " + (anyAvailable ? "rgba(255,255,255,0.08)" : "transparent"),
+                          borderRadius: 8, cursor: anyAvailable ? "pointer" : "default",
+                          opacity: anyAvailable ? 1 : 0.25, transition: "all 0.12s",
+                        }}>{r}</button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {pickedRank && (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                    {EX_SUITS.map(function(suit) {
+                      var card = pickedRank + suit;
+                      var used = usedCardsSet.has(card);
+                      return (
+                        <button key={suit} disabled={used} onClick={function() { if (!used) pickCard(card); }} style={{
+                          height: 84, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
+                          fontFamily: "var(--m)",
+                          background: used ? "rgba(255,255,255,0.015)" : "rgba(255,255,255,0.04)",
+                          border: "2px solid " + (used ? "transparent" : EX_SUIT_CLR[suit] + "40"),
+                          borderRadius: 10, cursor: used ? "default" : "pointer",
+                          opacity: used ? 0.2 : 1, transition: "all 0.12s",
+                        }}>
+                          <span style={{ fontSize: 24, color: EX_SUIT_CLR[suit] }}>{EX_SUIT_SYM[suit]}</span>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: EX_SUIT_CLR[suit] }}>{pickedRank}{suit}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {pickedRank && (
+                  <button onClick={function() { setPickedRank(null); }} style={{
+                    fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, color: C.txm,
+                    background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 6, padding: "8px 14px", cursor: "pointer", marginTop: 12,
+                  }}>{"←"} BACK TO RANKS</button>
+                )}
+              </div>
+            )}
+
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 8 }}>BOARD</div>
             <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
               {[0, 1, 2, 3, 4].map(function(i) { return <div key={"b" + i}>{renderConfirmSlot(boardCardArr[i], "board", i, true)}</div>; })}
@@ -2192,68 +2254,6 @@ function UploadsPage(props) {
               </div>
             )}
           </Glass>
-
-          {picking && (
-            <Glass style={{ padding: 18, marginBottom: 12, animation: "fu 0.15s both" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: C.gold, fontFamily: "var(--m)" }}>
-                  {pickedRank ? "PICK A SUIT FOR " + pickedRank : "PICK A RANK"} \u2014 {picking.target === "hero" ? "HERO" : picking.target === "villain" ? "VILLAIN" : "BOARD"} {picking.target === "board" ? ["FLOP 1","FLOP 2","FLOP 3","TURN","RIVER"][picking.idx] : picking.idx === 0 ? "CARD 1" : "CARD 2"}
-                </div>
-                <button onClick={function() { setPicking(null); setPickedRank(null); }} style={{
-                  fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, color: C.txm,
-                  background: "transparent", border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 6, padding: "5px 10px", cursor: "pointer",
-                }}>CANCEL</button>
-              </div>
-
-              {!pickedRank && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
-                  {EX_RANKS.map(function(r) {
-                    var anyAvailable = EX_SUITS.some(function(s) { return !usedCardsSet.has(r + s); });
-                    return (
-                      <button key={r} disabled={!anyAvailable} onClick={function() { setPickedRank(r); }} style={{
-                        height: 52, fontFamily: "var(--m)", fontSize: 20, fontWeight: 800, color: anyAvailable ? C.txb : C.txm,
-                        background: anyAvailable ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.015)",
-                        border: "1px solid " + (anyAvailable ? "rgba(255,255,255,0.08)" : "transparent"),
-                        borderRadius: 8, cursor: anyAvailable ? "pointer" : "default",
-                        opacity: anyAvailable ? 1 : 0.25, transition: "all 0.12s",
-                      }}>{r}</button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {pickedRank && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-                  {EX_SUITS.map(function(suit) {
-                    var card = pickedRank + suit;
-                    var used = usedCardsSet.has(card);
-                    return (
-                      <button key={suit} disabled={used} onClick={function() { if (!used) pickCard(card); }} style={{
-                        height: 84, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
-                        fontFamily: "var(--m)",
-                        background: used ? "rgba(255,255,255,0.015)" : "rgba(255,255,255,0.04)",
-                        border: "2px solid " + (used ? "transparent" : EX_SUIT_CLR[suit] + "40"),
-                        borderRadius: 10, cursor: used ? "default" : "pointer",
-                        opacity: used ? 0.2 : 1, transition: "all 0.12s",
-                      }}>
-                        <span style={{ fontSize: 24, color: EX_SUIT_CLR[suit] }}>{EX_SUIT_SYM[suit]}</span>
-                        <span style={{ fontSize: 14, fontWeight: 800, color: EX_SUIT_CLR[suit] }}>{pickedRank}{suit}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {pickedRank && (
-                <button onClick={function() { setPickedRank(null); }} style={{
-                  fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, color: C.txm,
-                  background: "transparent", border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: 6, padding: "8px 14px", cursor: "pointer", marginTop: 12,
-                }}>\u2190 BACK TO RANKS</button>
-              )}
-            </Glass>
-          )}
 
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={reset} style={{ flex: 1, padding: "14px", fontFamily: "var(--m)", fontSize: 12, fontWeight: 600, color: C.txm, background: "rgba(255,255,255,0.02)", border: "1px solid " + C.border, borderRadius: 8, cursor: "pointer" }}>START OVER</button>
