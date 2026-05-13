@@ -1936,7 +1936,7 @@ function UploadsPage(props) {
       var verifiedText = "Analyze this poker hand. The cards and action have already been verified by the user — use this as ground truth:\n\n" + JSON.stringify(extracted, null, 2) + "\n\nGive a full GTO breakdown with frequencies and verdicts per street.";
       var d = await askAI([
         { type: "text", text: verifiedText },
-      ]);
+      ], { model: "claude-opus-4-7" });
       if (extracted.hero_cards && !d.hero_cards) d.hero_cards = extracted.hero_cards;
       if (extracted.hero_position && !d.hero_position) d.hero_position = extracted.hero_position;
       if (extracted.villain_position && !d.villain_position) d.villain_position = extracted.villain_position;
