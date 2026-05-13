@@ -628,7 +628,17 @@ async function askAI(content, opts) {
   if (proxy.status === 503) throw new Error("AI is temporarily unavailable. Please try again in a moment.");
   if (pj.error) throw new Error(pj.error.message);
   var pt = pj.content.filter(function(b) { return b.type === "text"; }).map(function(b) { return b.text; }).join("");
-  return JSON.parse(pt.replace(/```json|```/g, "").trim());
+  var cleaned = pt.replace(/```json|```/g, "").trim();
+  /* Extract the first complete JSON object from the response */
+  var start = cleaned.indexOf("{");
+  if (start === -1) throw new Error("No JSON object found in AI response");
+  var depth = 0; var end = -1;
+  for (var i = start; i < cleaned.length; i++) {
+    if (cleaned[i] === "{") depth++;
+    else if (cleaned[i] === "}") { depth--; if (depth === 0) { end = i; break; } }
+  }
+  if (end === -1) throw new Error("AI response was truncated. Please try again.");
+  return JSON.parse(cleaned.substring(start, end + 1));
 }
 
 /* ICONS */
