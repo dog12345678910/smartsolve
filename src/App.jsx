@@ -4686,12 +4686,14 @@ export default function App() {
   var go = function(id) { setPg(id); setMenu(false); };
   var openHand = function(h) { setViewHand(h); setPg("uploads"); setMenu(false); };
 
+  /* Archived tabs — uncomment to restore:
+     { id: "builder", icon: Ic.range, t: "Ranges", d: "Build ranges" },
+  */
   var nav = [
     { id: "study", icon: Ic.study, t: "Study", d: "Study any spot" },
     { id: "trainer", icon: Ic.train, t: "Trainer", d: "Play vs. GTO" },
     { id: "uploads", icon: Ic.upload, t: "Uploads", d: "Analyze your game" },
     { id: "custom", icon: Ic.solve, t: "Custom", d: "AI solve any spot" },
-    { id: "builder", icon: Ic.range, t: "Ranges", d: "Build ranges" },
     { id: "equity", icon: Ic.equity, t: "Equity", d: "Equity calculator" },
     { id: "bankroll", icon: Ic.bankroll, t: "Bankroll", d: "Track your roll" },
     { id: "hands", icon: Ic.hands, t: "Hands", d: "Studied hands" },
