@@ -4621,6 +4621,146 @@ function SignInGate(props) {
   );
 }
 
+function useSubscription(user) {
+  var _sub = useState(null); var sub = _sub[0]; var setSub = _sub[1];
+  var _loaded = useState(false); var loaded = _loaded[0]; var setLoaded = _loaded[1];
+
+  var fetchSub = useCallback(function() {
+    if (!user || !supabase) { setSub(null); setLoaded(true); return; }
+    supabase.from("subscriptions").select("*").eq("user_id", user.id).maybeSingle()
+      .then(function(res) {
+        setSub(res && res.data ? res.data : null);
+        setLoaded(true);
+      });
+  }, [user]);
+
+  useEffect(function() { fetchSub(); }, [fetchSub]);
+
+  var isPro = !!(sub && (sub.status === "active" || sub.status === "trialing"));
+  return { sub: sub, isPro: isPro, loaded: loaded, refresh: fetchSub };
+}
+
+function PaywallModal(props) {
+  var user = props.user;
+  var onClose = props.onClose;
+  var reason = props.reason;
+  var _plan = useState("yearly"); var plan = _plan[0]; var setPlan = _plan[1];
+  var _busy = useState(false); var busy = _busy[0]; var setBusy = _busy[1];
+  var _err = useState(""); var err = _err[0]; var setErr = _err[1];
+
+  var subscribe = async function() {
+    if (!user) { setErr("Sign in first."); return; }
+    setBusy(true); setErr("");
+    try {
+      var r = await fetch("/api/stripe-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: plan, user_id: user.id, email: user.email }),
+      });
+      var j = await r.json();
+      if (!r.ok || !j.url) throw new Error(j.error || "Couldn't start checkout.");
+      window.location.href = j.url;
+    } catch (e) {
+      setErr(e.message || "Couldn't start checkout.");
+      setBusy(false);
+    }
+  };
+
+  var monthlyTotal = "$19.99/mo";
+  var yearlyTotal = "$199.99/yr";
+  var yearlyPerMo = "$16.66/mo";
+
+  return (
+    <div onClick={function() { if (!busy) onClose(); }} style={{
+      position: "fixed", inset: 0, zIndex: 60,
+      background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)",
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 18,
+    }}>
+      <div onClick={function(e) { e.stopPropagation(); }} style={{
+        width: "100%", maxWidth: 460,
+        background: "linear-gradient(180deg, #14151f, #0e0f17)",
+        border: "1px solid rgba(212,167,44,0.22)", borderRadius: 16,
+        padding: 26, animation: "fu 0.25s both", fontFamily: "var(--f)",
+        boxShadow: "0 40px 100px rgba(0,0,0,0.55), 0 0 0 1px rgba(212,167,44,0.04)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", color: C.gold, fontFamily: "var(--m)" }}>SMARTSOLVE PRO</div>
+          <button onClick={function() { if (!busy) onClose(); }} style={{
+            fontFamily: "var(--m)", fontSize: 14, color: C.txm,
+            background: "transparent", border: "none", cursor: "pointer", padding: 4,
+          }}>×</button>
+        </div>
+        <h2 style={{ fontSize: 24, fontWeight: 800, color: C.txb, letterSpacing: "-0.02em", marginBottom: 6 }}>Unlock the full game.</h2>
+        <p style={{ fontSize: 13, color: C.tx, lineHeight: 1.55, marginBottom: 18 }}>
+          {reason || "10-day free trial. Cancel anytime before day 10 — no charge."}
+        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+          <button onClick={function() { setPlan("monthly"); }} style={{
+            textAlign: "left", padding: 14, borderRadius: 10, cursor: "pointer",
+            background: plan === "monthly" ? "rgba(212,167,44,0.10)" : "rgba(255,255,255,0.02)",
+            border: "2px solid " + (plan === "monthly" ? C.gold + "60" : "rgba(255,255,255,0.06)"),
+            fontFamily: "var(--f)",
+          }}>
+            <div style={{ fontSize: 10, fontFamily: "var(--m)", fontWeight: 700, color: C.txm, letterSpacing: "0.08em", marginBottom: 4 }}>MONTHLY</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.txb }}>{monthlyTotal}</div>
+            <div style={{ fontSize: 11, color: C.txm, marginTop: 2 }}>billed monthly</div>
+          </button>
+          <button onClick={function() { setPlan("yearly"); }} style={{
+            textAlign: "left", padding: 14, borderRadius: 10, cursor: "pointer", position: "relative",
+            background: plan === "yearly" ? "rgba(212,167,44,0.10)" : "rgba(255,255,255,0.02)",
+            border: "2px solid " + (plan === "yearly" ? C.gold + "60" : "rgba(255,255,255,0.06)"),
+            fontFamily: "var(--f)",
+          }}>
+            <div style={{
+              position: "absolute", top: -8, right: 10,
+              fontSize: 9, fontFamily: "var(--m)", fontWeight: 700, color: "#000",
+              background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+              padding: "3px 7px", borderRadius: 4, letterSpacing: "0.06em",
+            }}>SAVE 17%</div>
+            <div style={{ fontSize: 10, fontFamily: "var(--m)", fontWeight: 700, color: C.txm, letterSpacing: "0.08em", marginBottom: 4 }}>YEARLY</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: C.txb }}>{yearlyTotal}</div>
+            <div style={{ fontSize: 11, color: C.txm, marginTop: 2 }}>{yearlyPerMo}</div>
+          </button>
+        </div>
+
+        <ul style={{ listStyle: "none", padding: 0, margin: "0 0 18px" }}>
+          {[
+            "Unlimited screenshot analysis",
+            "Custom solver (text + voice)",
+            "Flop texture reports",
+            "Full GTO chart library",
+            "Live trainer with EV tracking",
+            "Hand history + bankroll",
+          ].map(function(f) {
+            return (
+              <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", fontSize: 13, color: C.txb }}>
+                <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(76,175,125,0.18)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#4caf7d" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+                {f}
+              </li>
+            );
+          })}
+        </ul>
+
+        {err && <div style={{ fontSize: 12, color: C.red, marginBottom: 10, fontFamily: "var(--m)" }}>{err}</div>}
+
+        <button onClick={subscribe} disabled={busy} style={{
+          width: "100%", padding: "14px", fontFamily: "var(--f)", fontSize: 15, fontWeight: 700, color: "#000",
+          background: busy ? "rgba(212,167,44,0.4)" : "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+          border: "none", borderRadius: 10, cursor: busy ? "default" : "pointer",
+          boxShadow: "0 6px 20px rgba(212,167,44,0.28)",
+        }}>{busy ? "Loading checkout..." : "Start 10-day free trial"}</button>
+
+        <p style={{ fontSize: 11, color: C.txm, textAlign: "center", marginTop: 12, fontFamily: "var(--m)" }}>
+          Card required. No charge for 10 days. Cancel anytime.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function useAuth() {
   var _user = useState(null); var user = _user[0]; var setUser = _user[1];
   var _loading = useState(true); var loading = _loading[0]; var setLoading = _loading[1];
@@ -4642,11 +4782,20 @@ function useAuth() {
 
 export default function App() {
   var auth = useAuth();
+  var subscription = useSubscription(auth.user);
+  var isPro = subscription.isPro;
   var _pg = useState("home"); var pg = _pg[0]; var setPg = _pg[1];
   var _hist = useState([]); var hist = _hist[0]; var setHist = _hist[1];
   var _menu = useState(false); var menu = _menu[0]; var setMenu = _menu[1];
   var _viewHand = useState(null); var viewHand = _viewHand[0]; var setViewHand = _viewHand[1];
   var _showAuth = useState(false); var showAuth = _showAuth[0]; var setShowAuth = _showAuth[1];
+  var _paywall = useState(null); var paywall = _paywall[0]; var setPaywall = _paywall[1];
+  var PRO_ROUTES = { uploads: true, custom: true, reports: true };
+  var requirePro = function(reason) {
+    if (isPro) return true;
+    setPaywall(reason || "Upgrade to use this feature.");
+    return false;
+  };
 
   /* Load hand history for this user (must run before any early returns) */
   var userId = auth.user && auth.user.id;
@@ -4683,7 +4832,14 @@ export default function App() {
       }).then(function() {});
     }
   };
-  var go = function(id) { setPg(id); setMenu(false); };
+  var go = function(id) {
+    if (PRO_ROUTES[id] && !isPro) {
+      setPaywall("This feature is part of SmartSolve Pro.");
+      setMenu(false);
+      return;
+    }
+    setPg(id); setMenu(false);
+  };
   var openHand = function(h) { setViewHand(h); setPg("uploads"); setMenu(false); };
 
   /* Archived tabs — uncomment to restore:
@@ -4738,6 +4894,33 @@ export default function App() {
             </svg>
           </button>
         </div>
+        {!isPro && (
+          <button onClick={function() { setPaywall("Unlock the full SmartSolve."); }} style={{
+            fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", color: "#000",
+            background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+            border: "none", borderRadius: 6,
+            padding: "5px 10px", cursor: "pointer", marginLeft: 8, flexShrink: 0, whiteSpace: "nowrap",
+            boxShadow: "0 2px 8px rgba(212,167,44,0.25)",
+          }}>UPGRADE</button>
+        )}
+        {isPro && (
+          <button onClick={async function() {
+            try {
+              var r = await fetch("/api/stripe-portal", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id: auth.user.id }),
+              });
+              var j = await r.json();
+              if (j.url) window.location.href = j.url;
+            } catch (_) {}
+          }} title="Manage subscription" style={{
+            fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", color: C.gold,
+            background: "rgba(212,167,44,0.06)",
+            border: "1px solid rgba(212,167,44,0.18)", borderRadius: 6,
+            padding: "5px 10px", cursor: "pointer", marginLeft: 8, flexShrink: 0, whiteSpace: "nowrap",
+          }}>PRO</button>
+        )}
         <button onClick={signOut} title={auth.user && auth.user.email ? auth.user.email : "Sign out"} style={{
           fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", color: C.txm,
           background: "transparent", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6,
@@ -4850,13 +5033,13 @@ export default function App() {
         <div style={{ padding: "28px 20px 80px", maxWidth: 720, margin: "0 auto" }}>
           {pg === "study" && <StudyPage />}
           {pg === "trainer" && <TrainerPage />}
-          {pg === "uploads" && <UploadsPage onResult={addH} viewHand={viewHand} clearViewHand={function() { setViewHand(null); }} />}
-          {pg === "custom" && <CustomPage />}
+          {pg === "uploads" && isPro && <UploadsPage onResult={addH} viewHand={viewHand} clearViewHand={function() { setViewHand(null); }} />}
+          {pg === "custom" && isPro && <CustomPage />}
           {pg === "builder" && <RangeBuilderPage />}
           {pg === "equity" && <EquityPage />}
           {pg === "bankroll" && <BankrollPage user={auth.user} />}
           {pg === "hands" && <HandsPage history={hist} onView={openHand} />}
-          {pg === "reports" && <ReportsPage />}
+          {pg === "reports" && isPro && <ReportsPage />}
           {pg === "drills" && <DrillsPage onGo={go} />}
           {pg === "help" && <HelpPage />}
           {pg === "feedback" && isAdmin && <FeedbackInboxPage />}
@@ -4864,6 +5047,7 @@ export default function App() {
       )}
 
       <FeedbackButton user={auth.user} page={pg} />
+      {paywall && <PaywallModal user={auth.user} reason={paywall} onClose={function() { setPaywall(null); }} />}
       <style>{"@keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}.sp{animation:sp .6s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}::selection{background:rgba(212,167,44,.25)}*{box-sizing:border-box;margin:0;padding:0}textarea:focus{border-color:rgba(212,167,44,.4)!important}button:active{transform:scale(.98)!important}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.06);border-radius:3px}"}</style>
       <Analytics />
     </div>
