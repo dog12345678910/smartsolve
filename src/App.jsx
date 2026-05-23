@@ -53,6 +53,24 @@ function prettyDate(d) {
 
 const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"];
 
+const PROFILE_KEY = "ct_profile_v1";
+
+const ACTIVITY = [
+  { label: "Sedentary — little or no exercise", factor: 1.2 },
+  { label: "Light — exercise 1–3 days/week", factor: 1.375 },
+  { label: "Moderate — exercise 3–5 days/week", factor: 1.55 },
+  { label: "Active — exercise 6–7 days/week", factor: 1.725 },
+];
+
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 /* ---------- main app ---------- */
 
 export default function App() {
@@ -169,6 +187,8 @@ export default function App() {
           over={over}
           onGoalChange={setGoal}
         />
+
+        <GoalSetup goal={goal} onGoalChange={setGoal} />
 
         <FoodPicker db={foodDb} onAdd={addEntry} onRemember={rememberFood} />
 
@@ -302,6 +322,165 @@ function Macro({ label, value, color }) {
       <span style={S.macroValue}>{value}g</span>
       <span style={S.macroLabel}>{label}</span>
     </div>
+  );
+}
+
+/* ---------- weight-loss target calculator (Mifflin–St Jeor) ---------- */
+
+function GoalSetup({ goal, onGoalChange }) {
+  const saved = loadProfile();
+  const [open, setOpen] = useState(false);
+  const [sex, setSex] = useState(saved?.sex || "male");
+  const [age, setAge] = useState(saved?.age || "");
+  const [ft, setFt] = useState(saved?.ft || "");
+  const [inch, setInch] = useState(saved?.inch ?? "");
+  const [weight, setWeight] = useState(saved?.weight || ""); // lbs
+  const [activity, setActivity] = useState(saved?.activity ?? 1.2);
+  const [rate, setRate] = useState(saved?.rate ?? 1); // lbs/week
+  const [result, setResult] = useState(null);
+
+  function calc() {
+    const a = parseInt(age, 10);
+    const f = parseInt(ft, 10);
+    const i = parseInt(inch, 10) || 0;
+    const w = parseFloat(weight);
+    if (!Number.isFinite(a) || !Number.isFinite(f) || !Number.isFinite(w)) {
+      setResult({ error: "Fill in age, height, and weight." });
+      return;
+    }
+    const kg = w * 0.453592;
+    const cm = (f * 12 + i) * 2.54;
+    const bmr = 10 * kg + 6.25 * cm - 5 * a + (sex === "male" ? 5 : -161);
+    const tdee = bmr * activity;
+    const deficit = rate * 500; // ~3500 kcal per pound, spread over the week
+    const floor = sex === "male" ? 1500 : 1200; // common safe minimum
+    const target = Math.max(floor, Math.round((tdee - deficit) / 10) * 10);
+    const floored = tdee - deficit < floor;
+    setResult({ tdee: Math.round(tdee), target, floored, rate });
+    localStorage.setItem(
+      PROFILE_KEY,
+      JSON.stringify({ sex, age, ft, inch, weight, activity, rate })
+    );
+  }
+
+  return (
+    <section style={S.card}>
+      <div style={S.quickHeader}>
+        <h2 style={S.cardTitle}>Weight-loss target</h2>
+        <button style={S.setupToggle} onClick={() => setOpen((v) => !v)}>
+          {open ? "Hide" : "Calculate"}
+        </button>
+      </div>
+
+      {!open && (
+        <p style={S.subtle}>
+          Current goal: <b>{goal} kcal/day</b>. Tap Calculate to get a science-based
+          target for steady weight loss.
+        </p>
+      )}
+
+      {open && (
+        <>
+          <div style={S.formRow}>
+            <select style={S.input} value={sex} onChange={(e) => setSex(e.target.value)}>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+            <input
+              style={S.input}
+              type="number"
+              placeholder="Age"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+            />
+          </div>
+
+          <div style={S.formRow}>
+            <input
+              style={S.input}
+              type="number"
+              placeholder="Height ft"
+              value={ft}
+              onChange={(e) => setFt(e.target.value)}
+            />
+            <input
+              style={S.input}
+              type="number"
+              placeholder="in"
+              value={inch}
+              onChange={(e) => setInch(e.target.value)}
+            />
+            <input
+              style={{ ...S.input, flex: 1.4 }}
+              type="number"
+              placeholder="Weight (lbs)"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+            />
+          </div>
+
+          <div style={S.formRow}>
+            <select
+              style={{ ...S.input, flex: 2 }}
+              value={activity}
+              onChange={(e) => setActivity(parseFloat(e.target.value))}
+            >
+              {ACTIVITY.map((a) => (
+                <option key={a.factor} value={a.factor}>
+                  {a.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={S.formRow}>
+            <select
+              style={{ ...S.input, flex: 2 }}
+              value={rate}
+              onChange={(e) => setRate(parseFloat(e.target.value))}
+            >
+              <option value={0.5}>Lose 0.5 lb/week (gentle)</option>
+              <option value={1}>Lose 1 lb/week (recommended)</option>
+              <option value={1.5}>Lose 1.5 lb/week (aggressive)</option>
+            </select>
+            <button style={S.calcBtn} onClick={calc}>
+              Calculate
+            </button>
+          </div>
+
+          {result?.error && <p style={S.errorText}>{result.error}</p>}
+
+          {result && !result.error && (
+            <div style={S.resultBox}>
+              <div style={S.resultRow}>
+                <span style={S.subtle}>Maintenance (TDEE)</span>
+                <span>{result.tdee} kcal</span>
+              </div>
+              <div style={S.resultRow}>
+                <span style={S.subtle}>Target to lose {result.rate} lb/week</span>
+                <span style={{ fontWeight: 800, color: "#4ade80" }}>
+                  {result.target} kcal
+                </span>
+              </div>
+              {result.floored && (
+                <p style={S.subtle}>
+                  Capped at a safe minimum — don’t eat below this without medical advice.
+                </p>
+              )}
+              <button
+                style={S.addBtn}
+                onClick={() => {
+                  onGoalChange(result.target);
+                  setOpen(false);
+                }}
+              >
+                Use {result.target} kcal as my daily goal
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </section>
   );
 }
 
@@ -693,6 +872,41 @@ const S = {
     marginBottom: 16,
   },
   cardTitle: { fontSize: 15, fontWeight: 700, marginBottom: 12 },
+  setupToggle: {
+    background: "#181a24",
+    border: "1px solid #262936",
+    color: "#9aa0b8",
+    borderRadius: 8,
+    padding: "6px 12px",
+    fontSize: 13,
+    cursor: "pointer",
+  },
+  subtle: { fontSize: 13, color: "#7c8099", lineHeight: 1.5, margin: 0 },
+  errorText: { fontSize: 13, color: "#ff6b6b", margin: "4px 0" },
+  calcBtn: {
+    background: "#262936",
+    color: "#e7e9f0",
+    border: "none",
+    borderRadius: 8,
+    padding: "0 18px",
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  resultBox: {
+    background: "#0c0d12",
+    border: "1px solid #1d1f2a",
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 4,
+  },
+  resultRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontSize: 14,
+    marginBottom: 8,
+  },
   combo: { position: "relative", marginBottom: 10 },
   searchInput: {
     width: "100%",
