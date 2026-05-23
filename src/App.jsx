@@ -630,16 +630,31 @@ async function askAI(content, opts) {
   if (pj.error) throw new Error(pj.error.message);
   var pt = pj.content.filter(function(b) { return b.type === "text"; }).map(function(b) { return b.text; }).join("");
   var cleaned = pt.replace(/```json|```/g, "").trim();
-  /* Extract the first complete JSON object from the response */
+  /* Extract the first complete JSON object — string-aware brace counter */
   var start = cleaned.indexOf("{");
   if (start === -1) throw new Error("No JSON object found in AI response");
-  var depth = 0; var end = -1;
+  var depth = 0; var end = -1; var inStr = false; var esc = false;
   for (var i = start; i < cleaned.length; i++) {
-    if (cleaned[i] === "{") depth++;
-    else if (cleaned[i] === "}") { depth--; if (depth === 0) { end = i; break; } }
+    var ch = cleaned[i];
+    if (inStr) {
+      if (esc) { esc = false; }
+      else if (ch === "\\") { esc = true; }
+      else if (ch === '"') { inStr = false; }
+      continue;
+    }
+    if (ch === '"') { inStr = true; continue; }
+    if (ch === "{") depth++;
+    else if (ch === "}") { depth--; if (depth === 0) { end = i; break; } }
   }
   if (end === -1) throw new Error("AI response was truncated. Please try again.");
-  return JSON.parse(cleaned.substring(start, end + 1));
+  var raw = cleaned.substring(start, end + 1);
+  try { return JSON.parse(raw); } catch (e1) {
+    /* Repair common LLM JSON glitches: trailing commas before } or ] */
+    var repaired = raw.replace(/,(\s*[}\]])/g, "$1");
+    try { return JSON.parse(repaired); } catch (e2) {
+      throw new Error("AI returned invalid JSON: " + e1.message);
+    }
+  }
 }
 
 /* ICONS */
@@ -1931,7 +1946,7 @@ function UploadsPage(props) {
       var d = await askAI([
         { type: "image", source: { type: "base64", media_type: mime, data: b64 } },
         { type: "text", text: "Read this poker hand screenshot and return the table state as JSON only." },
-      ], { model: "claude-opus-4-7", system: EXTRACT_PROMPT, max_tokens: 8000, thinking: { type: "enabled", budget_tokens: 4000 } });
+      ], { model: "claude-opus-4-7", system: EXTRACT_PROMPT, max_tokens: 16000, thinking: { type: "enabled", budget_tokens: 4000 } });
       setExtracted(d);
       setExtractPhase("confirm");
     } catch (e) {
