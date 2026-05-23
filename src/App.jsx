@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { FOOD_DB, searchFoods } from "./foods";
 
 /* ---------- storage helpers ---------- */
 
 const GOAL_KEY = "ct_goal_v1";
 const ENTRIES_KEY = "ct_entries_v1";
+const CUSTOM_KEY = "ct_custom_v1";
 
 function loadGoal() {
   const raw = localStorage.getItem(GOAL_KEY);
@@ -11,9 +13,9 @@ function loadGoal() {
   return Number.isFinite(n) && n > 0 ? n : 2000;
 }
 
-function loadEntries() {
+function loadJSON(key) {
   try {
-    const raw = localStorage.getItem(ENTRIES_KEY);
+    const raw = localStorage.getItem(key);
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
@@ -49,30 +51,14 @@ function prettyDate(d) {
   });
 }
 
-/* ---------- quick-add food library ---------- */
-
-const QUICK_FOODS = [
-  { name: "Banana", calories: 105, protein: 1, carbs: 27, fat: 0 },
-  { name: "Apple", calories: 95, protein: 0, carbs: 25, fat: 0 },
-  { name: "Egg (1 large)", calories: 78, protein: 6, carbs: 1, fat: 5 },
-  { name: "Chicken breast (100g)", calories: 165, protein: 31, carbs: 0, fat: 4 },
-  { name: "White rice (1 cup)", calories: 205, protein: 4, carbs: 45, fat: 0 },
-  { name: "Greek yogurt (170g)", calories: 100, protein: 17, carbs: 6, fat: 0 },
-  { name: "Almonds (28g)", calories: 164, protein: 6, carbs: 6, fat: 14 },
-  { name: "Coffee (black)", calories: 2, protein: 0, carbs: 0, fat: 0 },
-  { name: "Slice of pizza", calories: 285, protein: 12, carbs: 36, fat: 10 },
-  { name: "Avocado (half)", calories: 160, protein: 2, carbs: 9, fat: 15 },
-  { name: "Oatmeal (1 cup)", calories: 154, protein: 6, carbs: 27, fat: 3 },
-  { name: "Protein shake", calories: 120, protein: 24, carbs: 3, fat: 1 },
-];
-
 const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"];
 
 /* ---------- main app ---------- */
 
 export default function App() {
   const [goal, setGoal] = useState(loadGoal);
-  const [entries, setEntries] = useState(loadEntries);
+  const [entries, setEntries] = useState(() => loadJSON(ENTRIES_KEY));
+  const [customFoods, setCustomFoods] = useState(() => loadJSON(CUSTOM_KEY));
   const [viewDate, setViewDate] = useState(() => new Date());
   const dateKey = toKey(viewDate);
 
@@ -83,6 +69,13 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
   }, [entries]);
+
+  useEffect(() => {
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(customFoods));
+  }, [customFoods]);
+
+  // Combined searchable database: built-in foods + user's saved custom foods.
+  const foodDb = useMemo(() => [...customFoods, ...FOOD_DB], [customFoods]);
 
   const dayEntries = useMemo(
     () => entries.filter((e) => e.date === dateKey),
@@ -103,7 +96,8 @@ export default function App() {
   }, [dayEntries]);
 
   const addEntry = useCallback(
-    (food, meal) => {
+    (food, meal, servings = 1) => {
+      const mult = servings > 0 ? servings : 1;
       setEntries((prev) => [
         ...prev,
         {
@@ -111,10 +105,12 @@ export default function App() {
           date: dateKey,
           meal,
           name: food.name,
-          calories: Math.round(food.calories) || 0,
-          protein: Math.round(food.protein) || 0,
-          carbs: Math.round(food.carbs) || 0,
-          fat: Math.round(food.fat) || 0,
+          serving: food.serving || "",
+          servings: mult,
+          calories: Math.round((food.calories || 0) * mult),
+          protein: Math.round((food.protein || 0) * mult),
+          carbs: Math.round((food.carbs || 0) * mult),
+          fat: Math.round((food.fat || 0) * mult),
           ts: Date.now(),
         },
       ]);
@@ -122,9 +118,34 @@ export default function App() {
     [dateKey]
   );
 
+  // Remember a food in the user's custom database so it autocompletes later.
+  const rememberFood = useCallback((food) => {
+    const exists = (list) =>
+      list.some((f) => f.name.trim().toLowerCase() === food.name.trim().toLowerCase());
+    if (FOOD_DB.some((f) => f.name.trim().toLowerCase() === food.name.trim().toLowerCase()))
+      return;
+    setCustomFoods((prev) =>
+      exists(prev) ? prev : [{ ...food, custom: true }, ...prev].slice(0, 200)
+    );
+  }, []);
+
   const removeEntry = useCallback((id) => {
     setEntries((prev) => prev.filter((e) => e.id !== id));
   }, []);
+
+  // Recently logged foods (unique by name), most recent first.
+  const recents = useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    for (let i = entries.length - 1; i >= 0 && out.length < 8; i--) {
+      const e = entries[i];
+      const key = e.name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(e);
+    }
+    return out;
+  }, [entries]);
 
   const remaining = goal - totals.calories;
   const pct = goal > 0 ? Math.min(100, (totals.calories / goal) * 100) : 0;
@@ -149,9 +170,11 @@ export default function App() {
           onGoalChange={setGoal}
         />
 
-        <AddForm onAdd={addEntry} />
+        <FoodPicker db={foodDb} onAdd={addEntry} onRemember={rememberFood} />
 
-        <QuickAdd onAdd={addEntry} />
+        {recents.length > 0 && (
+          <Recents recents={recents} onAdd={addEntry} />
+        )}
 
         <MealList entries={dayEntries} onRemove={removeEntry} />
       </div>
@@ -211,14 +234,7 @@ function Summary({ totals, goal, remaining, pct, over, onGoalChange }) {
     <section style={S.summary}>
       <div style={S.ringWrap}>
         <svg width="130" height="130" viewBox="0 0 130 130">
-          <circle
-            cx="65"
-            cy="65"
-            r="52"
-            fill="none"
-            stroke="#1d1f2a"
-            strokeWidth="12"
-          />
+          <circle cx="65" cy="65" r="52" fill="none" stroke="#1d1f2a" strokeWidth="12" />
           <circle
             cx="65"
             cy="65"
@@ -231,14 +247,7 @@ function Summary({ totals, goal, remaining, pct, over, onGoalChange }) {
             transform="rotate(-90 65 65)"
             style={{ transition: "stroke-dasharray 0.4s ease, stroke 0.3s" }}
           />
-          <text
-            x="65"
-            y="60"
-            textAnchor="middle"
-            fill="#fff"
-            fontSize="26"
-            fontWeight="700"
-          >
+          <text x="65" y="60" textAnchor="middle" fill="#fff" fontSize="26" fontWeight="700">
             {totals.calories}
           </text>
           <text x="65" y="80" textAnchor="middle" fill="#7c8099" fontSize="12">
@@ -296,121 +305,222 @@ function Macro({ label, value, color }) {
   );
 }
 
-/* ---------- manual add form ---------- */
+/* ---------- food picker (search + autocomplete) ---------- */
 
-function AddForm({ onAdd }) {
-  const [name, setName] = useState("");
-  const [calories, setCalories] = useState("");
+const EMPTY_FORM = { name: "", serving: "", calories: "", protein: "", carbs: "", fat: "" };
+
+function FoodPicker({ db, onAdd, onRemember }) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const [form, setForm] = useState(EMPTY_FORM); // selected/typed food
+  const [selected, setSelected] = useState(false); // a DB food was chosen
   const [meal, setMeal] = useState("Breakfast");
-  const [protein, setProtein] = useState("");
-  const [carbs, setCarbs] = useState("");
-  const [fat, setFat] = useState("");
-  const [showMacros, setShowMacros] = useState(false);
+  const [servings, setServings] = useState(1);
+  const boxRef = useRef(null);
 
-  function submit(e) {
-    e.preventDefault();
-    const cal = parseInt(calories, 10);
-    if (!name.trim() || !Number.isFinite(cal)) return;
-    onAdd(
-      {
-        name: name.trim(),
-        calories: cal,
-        protein: parseInt(protein, 10) || 0,
-        carbs: parseInt(carbs, 10) || 0,
-        fat: parseInt(fat, 10) || 0,
-      },
-      meal
-    );
-    setName("");
-    setCalories("");
-    setProtein("");
-    setCarbs("");
-    setFat("");
+  const results = useMemo(() => searchFoods(query, db), [query, db]);
+
+  useEffect(() => {
+    function onClick(e) {
+      if (boxRef.current && !boxRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  function choose(food) {
+    setForm({
+      name: food.name,
+      serving: food.serving || "",
+      calories: String(food.calories ?? ""),
+      protein: String(food.protein ?? ""),
+      carbs: String(food.carbs ?? ""),
+      fat: String(food.fat ?? ""),
+    });
+    setSelected(true);
+    setQuery(food.name);
+    setServings(1);
+    setOpen(false);
   }
 
+  function onQueryChange(v) {
+    setQuery(v);
+    setSelected(false);
+    setForm((f) => ({ ...f, name: v }));
+    setOpen(true);
+    setHighlight(0);
+  }
+
+  function onKeyDown(e) {
+    if (!open || results.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlight((h) => Math.min(results.length - 1, h + 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlight((h) => Math.max(0, h - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      choose(results[highlight]);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  }
+
+  const calNum = parseInt(form.calories, 10);
+  const canAdd = form.name.trim() && Number.isFinite(calNum);
+  const preview = canAdd ? Math.round(calNum * (servings > 0 ? servings : 1)) : 0;
+
+  function submit() {
+    if (!canAdd) return;
+    const food = {
+      name: form.name.trim(),
+      serving: form.serving.trim(),
+      calories: calNum,
+      protein: parseInt(form.protein, 10) || 0,
+      carbs: parseInt(form.carbs, 10) || 0,
+      fat: parseInt(form.fat, 10) || 0,
+    };
+    onAdd(food, meal, servings);
+    onRemember(food); // persist new/custom foods for future autocomplete
+    setForm(EMPTY_FORM);
+    setQuery("");
+    setSelected(false);
+    setServings(1);
+  }
+
+  const showManual = query.trim().length > 0;
+
   return (
-    <form style={S.card} onSubmit={submit}>
+    <section style={S.card}>
       <h2 style={S.cardTitle}>Add food</h2>
-      <div style={S.formRow}>
+
+      <div style={S.combo} ref={boxRef}>
         <input
-          style={{ ...S.input, flex: 2 }}
-          placeholder="Food name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          style={S.searchInput}
+          placeholder="Search foods (e.g. steak, banana, latte)…"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          onFocus={() => query && setOpen(true)}
+          onKeyDown={onKeyDown}
         />
-        <input
-          style={{ ...S.input, flex: 1 }}
-          type="number"
-          placeholder="kcal"
-          value={calories}
-          onChange={(e) => setCalories(e.target.value)}
-        />
+        {open && results.length > 0 && (
+          <ul style={S.dropdown}>
+            {results.map((f, i) => (
+              <li
+                key={f.name}
+                style={{
+                  ...S.option,
+                  background: i === highlight ? "#1d2030" : "transparent",
+                }}
+                onMouseEnter={() => setHighlight(i)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  choose(f);
+                }}
+              >
+                <div style={S.optMain}>
+                  <span style={S.optName}>
+                    {f.name}
+                    {f.custom && <span style={S.customTag}>saved</span>}
+                  </span>
+                  {f.serving && <span style={S.optServing}>{f.serving}</span>}
+                </div>
+                <span style={S.optCal}>{f.calories} kcal</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-      <div style={S.formRow}>
-        <select
-          style={{ ...S.input, flex: 1 }}
-          value={meal}
-          onChange={(e) => setMeal(e.target.value)}
-        >
-          {MEALS.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          style={S.macroToggle}
-          onClick={() => setShowMacros((v) => !v)}
-        >
-          {showMacros ? "Hide macros" : "Add macros"}
-        </button>
-      </div>
-      {showMacros && (
-        <div style={S.formRow}>
-          <input
-            style={S.input}
-            type="number"
-            placeholder="Protein (g)"
-            value={protein}
-            onChange={(e) => setProtein(e.target.value)}
-          />
-          <input
-            style={S.input}
-            type="number"
-            placeholder="Carbs (g)"
-            value={carbs}
-            onChange={(e) => setCarbs(e.target.value)}
-          />
-          <input
-            style={S.input}
-            type="number"
-            placeholder="Fat (g)"
-            value={fat}
-            onChange={(e) => setFat(e.target.value)}
-          />
-        </div>
+
+      {showManual && (
+        <>
+          {selected && form.serving && (
+            <p style={S.servingNote}>
+              Per serving: {form.serving} · {form.calories} kcal
+            </p>
+          )}
+          <div style={S.formRow}>
+            <input
+              style={{ ...S.input, flex: 1 }}
+              type="number"
+              placeholder="Calories"
+              value={form.calories}
+              onChange={(e) => setForm((f) => ({ ...f, calories: e.target.value }))}
+            />
+            <input
+              style={S.input}
+              type="number"
+              placeholder="Protein g"
+              value={form.protein}
+              onChange={(e) => setForm((f) => ({ ...f, protein: e.target.value }))}
+            />
+            <input
+              style={S.input}
+              type="number"
+              placeholder="Carbs g"
+              value={form.carbs}
+              onChange={(e) => setForm((f) => ({ ...f, carbs: e.target.value }))}
+            />
+            <input
+              style={S.input}
+              type="number"
+              placeholder="Fat g"
+              value={form.fat}
+              onChange={(e) => setForm((f) => ({ ...f, fat: e.target.value }))}
+            />
+          </div>
+
+          <div style={S.formRow}>
+            <div style={S.stepper}>
+              <button
+                type="button"
+                style={S.stepBtn}
+                onClick={() => setServings((s) => Math.max(0.5, +(s - 0.5).toFixed(1)))}
+              >
+                −
+              </button>
+              <span style={S.stepVal}>{servings}×</span>
+              <button
+                type="button"
+                style={S.stepBtn}
+                onClick={() => setServings((s) => +(s + 0.5).toFixed(1))}
+              >
+                +
+              </button>
+            </div>
+            <select
+              style={{ ...S.input, flex: 1 }}
+              value={meal}
+              onChange={(e) => setMeal(e.target.value)}
+            >
+              {MEALS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button type="button" style={{ ...S.addBtn, opacity: canAdd ? 1 : 0.5 }} onClick={submit} disabled={!canAdd}>
+            + Add {preview ? `${preview} kcal ` : ""}to {meal}
+          </button>
+        </>
       )}
-      <button type="submit" style={S.addBtn}>
-        + Add to {meal}
-      </button>
-    </form>
+    </section>
   );
 }
 
-/* ---------- quick add ---------- */
+/* ---------- recents ---------- */
 
-function QuickAdd({ onAdd }) {
+function Recents({ recents, onAdd }) {
   const [meal, setMeal] = useState("Snack");
   return (
     <section style={S.card}>
       <div style={S.quickHeader}>
-        <h2 style={S.cardTitle}>Quick add</h2>
-        <select
-          style={S.quickMeal}
-          value={meal}
-          onChange={(e) => setMeal(e.target.value)}
-        >
+        <h2 style={S.cardTitle}>Recent foods</h2>
+        <select style={S.quickMeal} value={meal} onChange={(e) => setMeal(e.target.value)}>
           {MEALS.map((m) => (
             <option key={m} value={m}>
               {m}
@@ -419,15 +529,28 @@ function QuickAdd({ onAdd }) {
         </select>
       </div>
       <div style={S.chips}>
-        {QUICK_FOODS.map((f) => (
+        {recents.map((e) => (
           <button
-            key={f.name}
+            key={e.name}
             style={S.chip}
-            onClick={() => onAdd(f, meal)}
-            title={`${f.calories} kcal`}
+            title={`${e.calories} kcal`}
+            onClick={() =>
+              onAdd(
+                {
+                  name: e.name,
+                  serving: e.serving,
+                  calories: Math.round((e.calories || 0) / (e.servings || 1)),
+                  protein: Math.round((e.protein || 0) / (e.servings || 1)),
+                  carbs: Math.round((e.carbs || 0) / (e.servings || 1)),
+                  fat: Math.round((e.fat || 0) / (e.servings || 1)),
+                },
+                meal,
+                e.servings || 1
+              )
+            }
           >
-            {f.name}
-            <span style={S.chipCal}>{f.calories}</span>
+            {e.name}
+            <span style={S.chipCal}>{e.calories}</span>
           </button>
         ))}
       </div>
@@ -465,17 +588,16 @@ function MealList({ entries, onRemove }) {
               {items.map((e) => (
                 <li key={e.id} style={S.item}>
                   <div style={S.itemMain}>
-                    <span style={S.itemName}>{e.name}</span>
+                    <span style={S.itemName}>
+                      {e.name}
+                      {e.servings && e.servings !== 1 ? ` ×${e.servings}` : ""}
+                    </span>
                     <span style={S.itemMacros}>
-                      P {e.protein} · C {e.carbs} · F {e.fat}
+                      {e.serving ? `${e.serving} · ` : ""}P {e.protein} · C {e.carbs} · F {e.fat}
                     </span>
                   </div>
                   <span style={S.itemCal}>{e.calories}</span>
-                  <button
-                    style={S.removeBtn}
-                    onClick={() => onRemove(e.id)}
-                    aria-label="Remove"
-                  >
+                  <button style={S.removeBtn} onClick={() => onRemove(e.id)} aria-label="Remove">
                     ×
                   </button>
                 </li>
@@ -495,17 +617,11 @@ const S = {
     minHeight: "100vh",
     background: "#0c0d12",
     color: "#e7e9f0",
-    fontFamily:
-      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     padding: "24px 16px 64px",
   },
   container: { maxWidth: 520, margin: "0 auto" },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
   brand: { display: "flex", alignItems: "center", gap: 8 },
   brandIcon: { fontSize: 24 },
   brandText: { fontSize: 20, fontWeight: 700, letterSpacing: -0.3 },
@@ -542,12 +658,7 @@ const S = {
   },
   ringWrap: { flexShrink: 0 },
   summaryInfo: { flex: 1, minWidth: 0 },
-  goalRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
+  goalRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   goalLabel: { fontSize: 13, color: "#7c8099" },
   goalValue: {
     background: "transparent",
@@ -582,10 +693,58 @@ const S = {
     marginBottom: 16,
   },
   cardTitle: { fontSize: 15, fontWeight: 700, marginBottom: 12 },
+  combo: { position: "relative", marginBottom: 10 },
+  searchInput: {
+    width: "100%",
+    background: "#0c0d12",
+    border: "1px solid #262936",
+    borderRadius: 10,
+    color: "#fff",
+    padding: "12px 14px",
+    fontSize: 15,
+    outline: "none",
+  },
+  dropdown: {
+    position: "absolute",
+    top: "calc(100% + 4px)",
+    left: 0,
+    right: 0,
+    background: "#12141c",
+    border: "1px solid #2a2e3e",
+    borderRadius: 10,
+    listStyle: "none",
+    maxHeight: 300,
+    overflowY: "auto",
+    zIndex: 20,
+    boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+  },
+  option: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "10px 14px",
+    cursor: "pointer",
+    gap: 10,
+  },
+  optMain: { display: "flex", flexDirection: "column", gap: 2, minWidth: 0 },
+  optName: { fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 },
+  optServing: { fontSize: 12, color: "#7c8099" },
+  optCal: { fontSize: 13, color: "#9aa0b8", fontWeight: 600, whiteSpace: "nowrap" },
+  customTag: {
+    fontSize: 10,
+    color: "#4ade80",
+    border: "1px solid #2e6b46",
+    borderRadius: 4,
+    padding: "0 4px",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  servingNote: { fontSize: 12, color: "#7c8099", margin: "0 0 10px" },
   formRow: { display: "flex", gap: 8, marginBottom: 10 },
   input: {
     flex: 1,
     width: "100%",
+    minWidth: 0,
     background: "#0c0d12",
     border: "1px solid #262936",
     borderRadius: 8,
@@ -594,15 +753,26 @@ const S = {
     fontSize: 14,
     outline: "none",
   },
-  macroToggle: {
-    background: "transparent",
-    border: "1px dashed #3b3f52",
-    color: "#9aa0b8",
+  stepper: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    background: "#0c0d12",
+    border: "1px solid #262936",
     borderRadius: 8,
-    padding: "0 14px",
-    fontSize: 13,
-    cursor: "pointer",
+    padding: "0 6px",
   },
+  stepBtn: {
+    background: "transparent",
+    border: "none",
+    color: "#e7e9f0",
+    fontSize: 20,
+    width: 28,
+    height: 38,
+    cursor: "pointer",
+    lineHeight: 1,
+  },
+  stepVal: { fontSize: 14, fontWeight: 700, minWidth: 34, textAlign: "center" },
   addBtn: {
     width: "100%",
     background: "#4ade80",
@@ -615,12 +785,7 @@ const S = {
     cursor: "pointer",
     marginTop: 4,
   },
-  quickHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
+  quickHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   quickMeal: {
     background: "#0c0d12",
     border: "1px solid #262936",
@@ -643,21 +808,10 @@ const S = {
     cursor: "pointer",
   },
   chipCal: { color: "#7c8099", fontSize: 12 },
-  mealHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
+  mealHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   mealCal: { fontSize: 13, color: "#9aa0b8", fontWeight: 600 },
   list: { listStyle: "none" },
-  item: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "10px 0",
-    borderTop: "1px solid #1d1f2a",
-  },
+  item: { display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderTop: "1px solid #1d1f2a" },
   itemMain: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 },
   itemName: { fontSize: 14, fontWeight: 500 },
   itemMacros: { fontSize: 11, color: "#7c8099" },
