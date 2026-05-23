@@ -618,6 +618,7 @@ async function askAI(content, opts) {
     system: opts.system || SYS_PROMPT,
     messages: [{ role: "user", content: content }],
   };
+  if (opts.thinking) body.thinking = opts.thinking;
 
   var proxy = await fetch("/api/analyze", {
     method: "POST",
@@ -1930,7 +1931,7 @@ function UploadsPage(props) {
       var d = await askAI([
         { type: "image", source: { type: "base64", media_type: mime, data: b64 } },
         { type: "text", text: "Read this poker hand screenshot and return the table state as JSON only." },
-      ], { model: "claude-opus-4-7", system: EXTRACT_PROMPT, max_tokens: 1500 });
+      ], { model: "claude-opus-4-7", system: EXTRACT_PROMPT, max_tokens: 8000, thinking: { type: "enabled", budget_tokens: 4000 } });
       setExtracted(d);
       setExtractPhase("confirm");
     } catch (e) {
