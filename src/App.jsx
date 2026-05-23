@@ -4773,14 +4773,15 @@ function useAuth() {
 export default function App() {
   var auth = useAuth();
   var subscription = useSubscription(auth.user);
-  var isPro = subscription.isPro;
+  var PAYWALL_ENABLED = false;
+  var isPro = PAYWALL_ENABLED ? subscription.isPro : true;
   var _pg = useState("home"); var pg = _pg[0]; var setPg = _pg[1];
   var _hist = useState([]); var hist = _hist[0]; var setHist = _hist[1];
   var _menu = useState(false); var menu = _menu[0]; var setMenu = _menu[1];
   var _viewHand = useState(null); var viewHand = _viewHand[0]; var setViewHand = _viewHand[1];
   var _showAuth = useState(false); var showAuth = _showAuth[0]; var setShowAuth = _showAuth[1];
   var _paywall = useState(null); var paywall = _paywall[0]; var setPaywall = _paywall[1];
-  var PRO_ROUTES = { uploads: true, custom: true, reports: true };
+  var PRO_ROUTES = PAYWALL_ENABLED ? { uploads: true, custom: true, reports: true } : {};
   var requirePro = function(reason) {
     if (isPro) return true;
     setPaywall(reason || "Upgrade to use this feature.");
@@ -4882,7 +4883,7 @@ export default function App() {
             </svg>
           </button>
         </div>
-        {!isPro && (
+        {PAYWALL_ENABLED && !isPro && (
           <button onClick={function() { setPaywall("Unlock the full SmartSolve."); }} style={{
             fontFamily: "var(--m)", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", color: "#000",
             background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
@@ -4891,7 +4892,7 @@ export default function App() {
             boxShadow: "0 2px 8px rgba(212,167,44,0.25)",
           }}>UPGRADE</button>
         )}
-        {isPro && (
+        {PAYWALL_ENABLED && isPro && (
           <button onClick={async function() {
             try {
               var r = await fetch("/api/stripe-portal", {
