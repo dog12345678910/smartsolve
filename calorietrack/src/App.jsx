@@ -23,6 +23,13 @@ function loadJSON(key) {
   }
 }
 
+// crypto.randomUUID is only defined in secure contexts (https/localhost);
+// fall back so adding food never throws on plain-http origins.
+function uid() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 /* ---------- date helpers ---------- */
 
 function toKey(d) {
@@ -119,7 +126,7 @@ export default function App() {
       setEntries((prev) => [
         ...prev,
         {
-          id: crypto.randomUUID(),
+          id: uid(),
           date: dateKey,
           meal,
           name: food.name,
@@ -328,7 +335,7 @@ function Macro({ label, value, color }) {
 /* ---------- weight-loss target calculator (Mifflin–St Jeor) ---------- */
 
 function GoalSetup({ goal, onGoalChange }) {
-  const saved = loadProfile();
+  const [saved] = useState(loadProfile);
   const [open, setOpen] = useState(false);
   const [sex, setSex] = useState(saved?.sex || "male");
   const [age, setAge] = useState(saved?.age || "");
@@ -344,8 +351,8 @@ function GoalSetup({ goal, onGoalChange }) {
     const f = parseInt(ft, 10);
     const i = parseInt(inch, 10) || 0;
     const w = parseFloat(weight);
-    if (!Number.isFinite(a) || !Number.isFinite(f) || !Number.isFinite(w)) {
-      setResult({ error: "Fill in age, height, and weight." });
+    if (!Number.isFinite(a) || a <= 0 || !Number.isFinite(f) || f < 0 || !Number.isFinite(w) || w <= 0) {
+      setResult({ error: "Enter a valid age, height, and weight." });
       return;
     }
     const kg = w * 0.453592;
@@ -389,6 +396,7 @@ function GoalSetup({ goal, onGoalChange }) {
             <input
               style={S.input}
               type="number"
+              min="0"
               placeholder="Age"
               value={age}
               onChange={(e) => setAge(e.target.value)}
@@ -399,6 +407,7 @@ function GoalSetup({ goal, onGoalChange }) {
             <input
               style={S.input}
               type="number"
+              min="0"
               placeholder="Height ft"
               value={ft}
               onChange={(e) => setFt(e.target.value)}
@@ -406,6 +415,7 @@ function GoalSetup({ goal, onGoalChange }) {
             <input
               style={S.input}
               type="number"
+              min="0"
               placeholder="in"
               value={inch}
               onChange={(e) => setInch(e.target.value)}
@@ -413,6 +423,7 @@ function GoalSetup({ goal, onGoalChange }) {
             <input
               style={{ ...S.input, flex: 1.4 }}
               type="number"
+              min="0"
               placeholder="Weight (lbs)"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
@@ -548,18 +559,19 @@ function FoodPicker({ db, onAdd, onRemember }) {
   }
 
   const calNum = parseInt(form.calories, 10);
-  const canAdd = form.name.trim() && Number.isFinite(calNum);
+  const canAdd = form.name.trim() && Number.isFinite(calNum) && calNum >= 0;
   const preview = canAdd ? Math.round(calNum * (servings > 0 ? servings : 1)) : 0;
 
   function submit() {
     if (!canAdd) return;
+    const nonNeg = (v) => Math.max(0, parseInt(v, 10) || 0);
     const food = {
       name: form.name.trim(),
       serving: form.serving.trim(),
       calories: calNum,
-      protein: parseInt(form.protein, 10) || 0,
-      carbs: parseInt(form.carbs, 10) || 0,
-      fat: parseInt(form.fat, 10) || 0,
+      protein: nonNeg(form.protein),
+      carbs: nonNeg(form.carbs),
+      fat: nonNeg(form.fat),
     };
     onAdd(food, meal, servings);
     onRemember(food); // persist new/custom foods for future autocomplete
@@ -624,6 +636,7 @@ function FoodPicker({ db, onAdd, onRemember }) {
             <input
               style={{ ...S.input, flex: 1 }}
               type="number"
+              min="0"
               placeholder="Calories"
               value={form.calories}
               onChange={(e) => setForm((f) => ({ ...f, calories: e.target.value }))}
@@ -631,6 +644,7 @@ function FoodPicker({ db, onAdd, onRemember }) {
             <input
               style={S.input}
               type="number"
+              min="0"
               placeholder="Protein g"
               value={form.protein}
               onChange={(e) => setForm((f) => ({ ...f, protein: e.target.value }))}
@@ -638,6 +652,7 @@ function FoodPicker({ db, onAdd, onRemember }) {
             <input
               style={S.input}
               type="number"
+              min="0"
               placeholder="Carbs g"
               value={form.carbs}
               onChange={(e) => setForm((f) => ({ ...f, carbs: e.target.value }))}
@@ -645,6 +660,7 @@ function FoodPicker({ db, onAdd, onRemember }) {
             <input
               style={S.input}
               type="number"
+              min="0"
               placeholder="Fat g"
               value={form.fat}
               onChange={(e) => setForm((f) => ({ ...f, fat: e.target.value }))}
