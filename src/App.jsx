@@ -3,11 +3,11 @@ import { Analytics } from "@vercel/analytics/react";
 import { supabase, supabaseConfigured } from "./supabase";
 
 const C = {
-  bg: "#0c0d12", bg1: "#131520", bg2: "#1a1c2a", bg3: "#22253a",
-  border: "#2a2d42", borderH: "#3a3d55",
-  gold: "#d4a72c", goldL: "#e8c34a",
-  blue: "#5b8def", green: "#4caf7d", red: "#d45555", amber: "#d4a853",
-  tx: "#9a97a0", txm: "#65626e", txb: "#eae6dd",
+  bg: "#181a23", bg1: "#20222f", bg2: "#292c3c", bg3: "#33374b",
+  border: "#383c54", borderH: "#494d68",
+  gold: "#e0b53e", goldL: "#f2cb5c",
+  blue: "#6b9bf5", green: "#54c08a", red: "#e26b6b", amber: "#e0b85f",
+  tx: "#c4c1cb", txm: "#8d8a98", txb: "#f4f1ea",
 };
 
 const RANKS = ["A","K","Q","J","T","9","8","7","6","5","4","3","2"];
@@ -3934,7 +3934,7 @@ function FeedbackButton(props) {
 }
 
 var landingCss = "\
-.ss-landing { --bg: #07080c; --bg1: #0c0d14; --bg2: #11131c; --gold: #d4a72c; --goldL: #e8c34a; --goldD: #b8922a; --raise: #4caf7d; --threebet: #e8c34a; --call: #5b8def; --fold: #d45555; --tx: #b8b4aa; --txb: #eae6dd; --txm: #5a576a; --txd: #2a2935; --f: 'DM Sans', system-ui, sans-serif; --m: 'JetBrains Mono', 'SF Mono', monospace; --border: rgba(255,255,255,0.05); --borderH: rgba(212,167,44,0.18); --glass: rgba(255,255,255,0.018); }\
+.ss-landing { --bg: #141620; --bg1: #1c1e2a; --bg2: #242736; --gold: #e0b53e; --goldL: #f2cb5c; --goldD: #c79e34; --raise: #54c08a; --threebet: #f2cb5c; --call: #6b9bf5; --fold: #e26b6b; --tx: #c7c3cd; --txb: #f4f1ea; --txm: #8d8a98; --txd: #3a3947; --f: 'DM Sans', system-ui, sans-serif; --m: 'JetBrains Mono', 'SF Mono', monospace; --border: rgba(255,255,255,0.07); --borderH: rgba(224,181,62,0.22); --glass: rgba(255,255,255,0.025); }\
 .ss-landing, .ss-landing *, .ss-landing *::before, .ss-landing *::after { margin: 0; padding: 0; box-sizing: border-box; }\
 .ss-landing ::selection { background: var(--gold); color: var(--bg); }\
 .ss-landing .atmos { position: fixed; inset: 0; pointer-events: none; z-index: 0; background: radial-gradient(ellipse 800px 500px at 15% 10%, rgba(212,167,44,0.06), transparent 60%), radial-gradient(ellipse 700px 400px at 85% 80%, rgba(91,141,239,0.04), transparent 60%), radial-gradient(ellipse 500px 300px at 50% 50%, rgba(76,175,125,0.025), transparent 70%); }\
@@ -4168,7 +4168,7 @@ function LandingPage(props) {
   var goSignIn = function(e) { if (e) e.preventDefault(); onSignIn(); };
 
   return (
-    <div ref={rootRef} className="ss-landing" style={{ background: "#07080c", color: "#b8b4aa", fontFamily: "'DM Sans', system-ui, sans-serif", overflowX: "hidden", minHeight: "100vh" }}>
+    <div ref={rootRef} className="ss-landing" style={{ background: "#141620", color: "#c7c3cd", fontFamily: "'DM Sans', system-ui, sans-serif", overflowX: "hidden", minHeight: "100vh" }}>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -4890,7 +4890,7 @@ export default function App() {
     <div style={{ "--f": "'DM Sans',system-ui,sans-serif", "--m": "'JetBrains Mono','SF Mono',monospace", minHeight: "100vh", background: C.bg, fontFamily: "var(--f)", color: C.tx }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet" />
 
-      <div style={{ background: "rgba(12,13,18,0.95)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0 16px", display: "flex", alignItems: "center", height: 48, position: "sticky", top: 0, zIndex: 20 }}>
+      <div style={{ background: "rgba(24,26,35,0.95)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 16px", display: "flex", alignItems: "center", height: 48, position: "sticky", top: 0, zIndex: 20 }}>
         <div onClick={function() { go("home"); }} style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", flexShrink: 0, marginRight: 16 }}>
           <div style={{ width: 26, height: 26, borderRadius: 6, background: "#1a1c2a", border: "1px solid rgba(212,167,44,0.15)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
             <svg width="22" height="22" viewBox="0 0 64 64" fill="none"><rect x="4" y="4" width="56" height="56" rx="10" fill="#1a1c2a"/><rect x="10" y="10" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="23" y="10" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="36" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.8"/><rect x="49" y="10" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.35"/><rect x="10" y="23" width="11" height="11" rx="3" fill="#d4a72c"/><rect x="23" y="23" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.65"/><rect x="36" y="23" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.3"/><rect x="10" y="36" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.55"/><rect x="23" y="36" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.2"/><rect x="10" y="49" width="11" height="11" rx="3" fill="#d4a72c" opacity="0.15"/></svg>
@@ -4946,7 +4946,7 @@ export default function App() {
       </div>
 
       {menu && (
-        <div style={{ position: "fixed", top: 52, left: 16, right: 16, maxWidth: 320, background: "rgba(26,28,42,0.98)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: 6, zIndex: 30, boxShadow: "0 12px 40px rgba(0,0,0,0.5)", maxHeight: "calc(100vh - 64px)", overflowY: "auto" }}>
+        <div style={{ position: "fixed", top: 52, left: 16, right: 16, maxWidth: 320, background: "rgba(41,44,60,0.98)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: 6, zIndex: 30, boxShadow: "0 12px 40px rgba(0,0,0,0.5)", maxHeight: "calc(100vh - 64px)", overflowY: "auto" }}>
           {nav.map(function(n) {
             var active = pg === n.id;
             return (
@@ -4965,7 +4965,7 @@ export default function App() {
 
       {isHome && (
         <div style={{ animation: "fu 0.5s both" }}>
-          <div style={{ position: "relative", overflow: "hidden", padding: "48px 28px 40px", background: "linear-gradient(160deg, #0f1118 0%, #151928 40%, #1a1630 70%, #12101c 100%)" }}>
+          <div style={{ position: "relative", overflow: "hidden", padding: "48px 28px 40px", background: "linear-gradient(160deg, #20232f 0%, #262a3e 40%, #2b2542 70%, #221f30 100%)" }}>
             <div style={{ position: "absolute", top: -60, right: -40, width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle, rgba(212,167,44,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
             <div style={{ position: "absolute", bottom: -80, left: -60, width: 260, height: 260, borderRadius: "50%", background: "radial-gradient(circle, rgba(91,141,239,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
             <div style={{ position: "relative", maxWidth: 680, margin: "0 auto" }}>
