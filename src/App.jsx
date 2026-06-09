@@ -1812,7 +1812,7 @@ function TrainerPage() {
             color: "#000", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
             border: "none", borderRadius: 8, padding: "16px", cursor: "pointer",
             boxShadow: "0 2px 12px rgba(212,167,44,0.25)",
-          }}>NEXT HAND \u2192</button>
+          }}>NEXT HAND</button>
         </div>
       )}
 
