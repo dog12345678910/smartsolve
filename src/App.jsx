@@ -1383,7 +1383,8 @@ var SEATS = [
   { id: "MP", x: 15, y: 16 },
 ];
 
-function TrainerPage() {
+function TrainerPage(props) {
+  var user = props && props.user;
   var _session = useState("idle"); var session = _session[0]; var setSession = _session[1];
   var _startedAt = useState(null); var startedAt = _startedAt[0]; var setStartedAt = _startedAt[1];
   var _endedAt = useState(null); var endedAt = _endedAt[0]; var setEndedAt = _endedAt[1];
@@ -1475,8 +1476,34 @@ function TrainerPage() {
 
   var endSession = function() {
     if (timerRef.current) clearInterval(timerRef.current);
-    setEndedAt(Date.now());
+    var ended = Date.now();
+    setEndedAt(ended);
     setSession("ended");
+    if (supabase && user && user.id && stats.hands > 0) {
+      var positions = {};
+      log.forEach(function(e) {
+        var p = e.pos || "?";
+        if (!positions[p]) positions[p] = { hands: 0, correct: 0 };
+        positions[p].hands++;
+        if (e.right) positions[p].correct++;
+      });
+      var duration = ended - (startedAt || ended);
+      var pct = stats.hands > 0 ? Math.round(stats.correct / stats.hands * 100) : 0;
+      supabase.from("trainer_sessions").insert({
+        user_id: user.id,
+        started_at: startedAt ? new Date(startedAt).toISOString() : null,
+        ended_at: new Date(ended).toISOString(),
+        duration_ms: duration,
+        hands: stats.hands,
+        correct: stats.correct,
+        accuracy_pct: pct,
+        best_streak: bestStreak,
+        ev_loss: evLoss,
+        mode: mode,
+        positions: positions,
+        log: log,
+      }).then(function() {});
+    }
   };
 
   useEffect(function() { if (session === "active") deal(); }, [deal, session]);
@@ -1749,7 +1776,7 @@ function TrainerPage() {
           { label: "HANDS", value: stats.hands, color: C.txb },
           { label: "ACCURACY", value: stats.hands ? pct + "%" : "\u2014", color: pct >= 70 ? C.green : pct >= 40 ? C.amber : stats.hands ? C.red : C.txm },
           { label: "STREAK", value: streak, color: streak >= 5 ? C.gold : C.txb },
-          { label: "EV LOSS", value: evLoss ? "-" + evLoss + "bb" : "0", color: evLoss > 0 ? C.red : C.txb },
+          { label: "EV LOSS", value: evLoss ? evLoss + "bb" : "0", color: evLoss > 0 ? C.red : C.txb },
         ].map(function(s) {
           return (
             <div key={s.label} style={{ padding: "12px 8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, textAlign: "center" }}>
@@ -3440,6 +3467,27 @@ function EquityPage() {
 
 function AnalyticsPage(props) {
   var history = props.history || [];
+  var user = props.user;
+  var _sessions = useState(null); var sessions = _sessions[0]; var setSessions = _sessions[1];
+
+  useEffect(function() {
+    if (!user || !supabase) { setSessions([]); return; }
+    supabase.from("trainer_sessions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50)
+      .then(function(res) { setSessions((res && res.data) || []); });
+  }, [user]);
+
+  var trainerStats = useMemo(function() {
+    if (!sessions || !sessions.length) return null;
+    var totalHands = 0, totalCorrect = 0, totalEv = 0, best = 0;
+    sessions.forEach(function(s) {
+      totalHands += s.hands || 0;
+      totalCorrect += s.correct || 0;
+      totalEv += parseFloat(s.ev_loss) || 0;
+      if ((s.best_streak || 0) > best) best = s.best_streak;
+    });
+    var accuracy = totalHands ? Math.round((totalCorrect / totalHands) * 100) : 0;
+    return { sessions: sessions.length, hands: totalHands, correct: totalCorrect, accuracy: accuracy, evLoss: +totalEv.toFixed(1), bestStreak: best };
+  }, [sessions]);
 
   var stats = useMemo(function() {
     if (!history.length) return null;
@@ -3493,18 +3541,81 @@ function AnalyticsPage(props) {
     return { total: total, totalEv: totalEv, gradeCounts: gradeCounts, gradeColor: gradeColor, avgGradeLetter: avgGradeLetter, mistakes: mistakes, posList: posList, recent: recent, maxBar: maxBar };
   }, [history]);
 
-  if (!stats) return <Glass style={{ textAlign: "center", padding: 48 }}><p style={{ color: C.txm, fontSize: 16 }}>No hands yet. Upload a screenshot to start tracking your analytics.</p></Glass>;
+  if (!stats && !trainerStats) {
+    return (
+      <div>
+        <div style={{ marginBottom: 16 }}>
+          <span style={{ fontSize: 22, fontWeight: 300, color: C.txb, letterSpacing: "-0.02em" }}>Analytics</span>
+        </div>
+        <Glass style={{ textAlign: "center", padding: 48 }}>
+          <p style={{ color: C.txm, fontSize: 16, marginBottom: 6 }}>No data yet.</p>
+          <p style={{ color: C.txm, fontSize: 13, opacity: 0.7 }}>Run a trainer session or upload a hand to start tracking your progress.</p>
+        </Glass>
+      </div>
+    );
+  }
 
-  var avgEv = (stats.totalEv / stats.total).toFixed(2);
-  var maxGrade = Math.max.apply(null, ["A","B","C","D","F"].map(function(k) { return stats.gradeCounts[k]; }));
+  var avgEv = stats ? (stats.totalEv / stats.total).toFixed(2) : null;
+  var maxGrade = stats ? Math.max.apply(null, ["A","B","C","D","F"].map(function(k) { return stats.gradeCounts[k]; })) : 0;
 
   return (
     <div>
       <div style={{ marginBottom: 16 }}>
         <span style={{ fontSize: 22, fontWeight: 300, color: C.txb, letterSpacing: "-0.02em" }}>Analytics</span>
-        <div style={{ fontSize: 12, fontFamily: "var(--m)", color: C.txm, marginTop: 2 }}>{stats.total} hand{stats.total !== 1 ? "s" : ""} analyzed</div>
+        <div style={{ fontSize: 12, fontFamily: "var(--m)", color: C.txm, marginTop: 2 }}>
+          {trainerStats ? trainerStats.sessions + " session" + (trainerStats.sessions !== 1 ? "s" : "") : ""}
+          {trainerStats && stats ? " · " : ""}
+          {stats ? stats.total + " hand" + (stats.total !== 1 ? "s" : "") + " analyzed" : ""}
+        </div>
       </div>
 
+      {trainerStats && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: C.gold, fontFamily: "var(--m)", marginBottom: 10 }}>TRAINER · LIFETIME</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 12 }}>
+            {[
+              { label: "HANDS", value: trainerStats.hands, color: C.txb },
+              { label: "ACCURACY", value: trainerStats.accuracy + "%", color: trainerStats.accuracy >= 70 ? C.green : trainerStats.accuracy >= 40 ? C.amber : C.red },
+              { label: "BEST STREAK", value: trainerStats.bestStreak, color: trainerStats.bestStreak >= 5 ? C.gold : C.txb },
+              { label: "EV LOSS", value: trainerStats.evLoss + "bb", color: trainerStats.evLoss > 0 ? C.red : C.txb },
+            ].map(function(s) {
+              return (
+                <div key={s.label} style={{ padding: "12px 8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, textAlign: "center" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 5 }}>{s.label}</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: s.color, fontFamily: "var(--m)" }}>{s.value}</div>
+                </div>
+              );
+            })}
+          </div>
+          {sessions && sessions.length > 0 && (
+            <Glass style={{ padding: 14 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 10 }}>RECENT SESSIONS</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {sessions.slice(0, 8).map(function(s) {
+                  var when = s.created_at ? new Date(s.created_at) : null;
+                  var date = when ? (when.getMonth() + 1) + "/" + when.getDate() : "—";
+                  var acc = s.accuracy_pct || 0;
+                  return (
+                    <div key={s.id} style={{ display: "grid", gridTemplateColumns: "44px 1fr 60px 60px 60px", gap: 10, alignItems: "center", padding: "6px 4px", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                      <div style={{ fontFamily: "var(--m)", fontSize: 10, color: C.txm }}>{date}</div>
+                      <div style={{ fontFamily: "var(--m)", fontSize: 11, color: C.txb }}>{(s.mode || "—").toUpperCase()}</div>
+                      <div style={{ fontFamily: "var(--m)", fontSize: 11, color: C.txm, textAlign: "right" }}>{s.hands || 0}h</div>
+                      <div style={{ fontFamily: "var(--m)", fontSize: 12, fontWeight: 700, color: acc >= 70 ? C.green : acc >= 40 ? C.amber : C.red, textAlign: "right" }}>{acc}%</div>
+                      <div style={{ fontFamily: "var(--m)", fontSize: 11, color: (parseFloat(s.ev_loss) || 0) > 0 ? C.red : C.txm, textAlign: "right" }}>{s.ev_loss || 0}bb</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Glass>
+          )}
+        </div>
+      )}
+
+      {stats && (
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: C.gold, fontFamily: "var(--m)", marginBottom: 10, marginTop: 18 }}>UPLOADED HANDS</div>
+      )}
+
+      {stats && (<>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 14 }}>
         {[
           { label: "HANDS", value: stats.total, color: C.txb },
@@ -3579,6 +3690,7 @@ function AnalyticsPage(props) {
           </div>
         </Glass>
       )}
+      </>)}
     </div>
   );
 }
@@ -4882,6 +4994,7 @@ export default function App() {
   var nav = [
     { id: "study", icon: Ic.study, t: "Study", d: "Study any spot" },
     { id: "trainer", icon: Ic.train, t: "Trainer", d: "Play vs. GTO" },
+    { id: "analytics", icon: Ic.analytics, t: "Analytics", d: "Your progress" },
     { id: "uploads", icon: Ic.upload, t: "Uploads", d: "Analyze your game" },
     { id: "custom", icon: Ic.solve, t: "Custom", d: "AI solve any spot" },
     { id: "equity", icon: Ic.equity, t: "Equity", d: "Equity calculator" },
@@ -5066,7 +5179,8 @@ export default function App() {
       {!isHome && (
         <div style={{ padding: "28px 20px 80px", maxWidth: 720, margin: "0 auto" }}>
           {pg === "study" && <StudyPage />}
-          {pg === "trainer" && <TrainerPage />}
+          {pg === "trainer" && <TrainerPage user={auth.user} />}
+          {pg === "analytics" && <AnalyticsPage history={hist} user={auth.user} />}
           {pg === "uploads" && isPro && <UploadsPage onResult={addH} viewHand={viewHand} clearViewHand={function() { setViewHand(null); }} />}
           {pg === "custom" && isPro && <CustomPage />}
           {pg === "builder" && <RangeBuilderPage />}
