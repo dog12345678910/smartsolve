@@ -1481,6 +1481,26 @@ function TrainerPage() {
 
   useEffect(function() { if (session === "active") deal(); }, [deal, session]);
 
+  useEffect(function() {
+    if (session !== "active") return;
+    var onKey = function(e) {
+      var tag = (e.target && e.target.tagName) || "";
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      var k = (e.key || "").toLowerCase();
+      if (!ans && hand) {
+        if (k === "f") { e.preventDefault(); check("Fold"); }
+        else if (k === "c" && mode === "vs_open") { e.preventDefault(); check("Call"); }
+        else if (k === "r") { e.preventDefault(); check(mode === "rfi" ? "Raise" : "3-Bet"); }
+      } else if (ans) {
+        if (k === "enter" || k === " " || k === "n") { e.preventDefault(); deal(); }
+        else if (k === "h") { e.preventDefault(); setShowRange(function(v) { return !v; }); }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return function() { window.removeEventListener("keydown", onKey); };
+  }, [session, ans, hand, mode, deal]);
+
   var c1 = hand ? parseCards(hand.c1) : [];
   var c2 = hand ? parseCards(hand.c2) : [];
   var pct = stats.hands > 0 ? Math.round(stats.correct / stats.hands * 100) : 0;
@@ -1624,19 +1644,20 @@ function TrainerPage() {
           <span style={{ fontSize: 28, fontWeight: 800, color: C.gold, letterSpacing: "-0.03em" }}>{pos.replace("BB vs ", "BB v ")}</span>
           <span style={{ fontSize: 16, color: C.txm, fontWeight: 300 }}>{mode === "rfi" ? "Raise First In" : "Facing Open"}</span>
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 8 }}>
           <button onClick={function() { setTimed(!timed); }} style={{
-            fontFamily: "var(--m)", fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
+            fontFamily: "var(--m)", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em",
             color: timed ? C.gold : C.txm,
-            background: timed ? "rgba(212,167,44,0.06)" : "transparent",
-            border: "1px solid " + (timed ? "rgba(212,167,44,0.15)" : "rgba(255,255,255,0.05)"),
-            borderRadius: 6, padding: "5px 12px", cursor: "pointer",
-          }}>TIMED {timed ? "ON" : "OFF"}</button>
+            background: timed ? "rgba(212,167,44,0.06)" : "rgba(255,255,255,0.02)",
+            border: "1px solid " + (timed ? "rgba(212,167,44,0.25)" : "rgba(255,255,255,0.06)"),
+            borderRadius: 8, padding: "9px 14px", cursor: "pointer",
+          }}>{"⏱ TIMED " + (timed ? "ON" : "OFF")}</button>
           <button onClick={endSession} style={{
-            fontFamily: "var(--m)", fontSize: 9, fontWeight: 700, letterSpacing: "0.06em",
-            color: C.red, background: "rgba(215,85,85,0.06)",
-            border: "1px solid rgba(215,85,85,0.15)",
-            borderRadius: 6, padding: "5px 12px", cursor: "pointer",
+            fontFamily: "var(--m)", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em",
+            color: "#fff", background: "rgba(215,85,85,0.22)",
+            border: "1px solid rgba(215,85,85,0.4)",
+            borderRadius: 8, padding: "9px 14px", cursor: "pointer",
+            boxShadow: "0 1px 4px rgba(215,85,85,0.15)",
           }}>END SESSION</button>
         </div>
       </div>
@@ -1723,18 +1744,17 @@ function TrainerPage() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
         {[
           { label: "HANDS", value: stats.hands, color: C.txb },
           { label: "ACCURACY", value: stats.hands ? pct + "%" : "\u2014", color: pct >= 70 ? C.green : pct >= 40 ? C.amber : stats.hands ? C.red : C.txm },
           { label: "STREAK", value: streak, color: streak >= 5 ? C.gold : C.txb },
-          { label: "BEST", value: bestStreak, color: bestStreak >= 5 ? C.gold : C.txb },
-          { label: "EV LOSS", value: evLoss ? evLoss + "bb" : "0", color: evLoss > 0 ? C.red : C.txb },
+          { label: "EV LOSS", value: evLoss ? "-" + evLoss + "bb" : "0", color: evLoss > 0 ? C.red : C.txb },
         ].map(function(s) {
           return (
-            <div key={s.label} style={{ padding: "10px 6px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 8, textAlign: "center" }}>
-              <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 3 }}>{s.label}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: s.color, fontFamily: "var(--m)" }}>{s.value}</div>
+            <div key={s.label} style={{ padding: "12px 8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, textAlign: "center" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 5 }}>{s.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: s.color, fontFamily: "var(--m)" }}>{s.value}</div>
             </div>
           );
         })}
@@ -1765,18 +1785,18 @@ function TrainerPage() {
             fontFamily: "var(--m)", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em",
             color: "#fff", background: "rgba(215,85,85,0.18)",
             border: "1px solid rgba(215,85,85,0.12)", borderRadius: 8, padding: "16px 8px", cursor: "pointer",
-          }}>FOLD</button>
+          }}>FOLD <span style={{ opacity: 0.4, fontSize: 9, marginLeft: 4 }}>F</span></button>
           {mode === "vs_open" && <button onClick={function() { check("Call"); }} style={{
             fontFamily: "var(--m)", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em",
             color: "#fff", background: "rgba(91,141,239,0.18)",
             border: "1px solid rgba(91,141,239,0.12)", borderRadius: 8, padding: "16px 8px", cursor: "pointer",
-          }}>CALL</button>}
+          }}>CALL <span style={{ opacity: 0.4, fontSize: 9, marginLeft: 4 }}>C</span></button>}
           <button onClick={function() { check(mode === "rfi" ? "Raise" : "3-Bet"); }} style={{
             fontFamily: "var(--m)", fontSize: 12, fontWeight: 700, letterSpacing: "0.04em",
             color: "#fff", background: mode === "rfi" ? "rgba(76,175,125,0.18)" : "rgba(212,169,60,0.18)",
             border: "1px solid " + (mode === "rfi" ? "rgba(76,175,125,0.12)" : "rgba(212,169,60,0.12)"),
             borderRadius: 8, padding: "16px 8px", cursor: "pointer",
-          }}>{mode === "rfi" ? "RAISE 2.5x" : "3-BET"}</button>
+          }}>{mode === "rfi" ? "RAISE 2.5x" : "3-BET"} <span style={{ opacity: 0.4, fontSize: 9, marginLeft: 4 }}>R</span></button>
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 8, marginBottom: 14, animation: "fu 0.15s both" }}>
