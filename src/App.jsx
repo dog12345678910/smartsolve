@@ -1404,13 +1404,6 @@ function TrainerPage() {
 
   var modePositions = mode === "rfi" ? Object.keys(RFI) : ["BB vs UTG","BB vs MP","BB vs CO","BB vs BTN","BB vs SB"];
 
-  useEffect(function() {
-    if (!ans || !nextHandRef.current) return;
-    var el = nextHandRef.current;
-    requestAnimationFrame(function() {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-  }, [ans]);
 
   useEffect(function() {
     if (modePositions.indexOf(pos) === -1) setPos(modePositions[0]);
@@ -1765,7 +1758,7 @@ function TrainerPage() {
         <div style={{ fontFamily: "var(--m)", fontSize: 14, fontWeight: 700, color: C.txb, letterSpacing: "0.06em" }}>{hand ? hand.key : ""}</div>
       </Glass>
 
-      {/* Action buttons */}
+      {/* Action row \u2014 same position whether answering or moving on. Buttons never jump. */}
       {!ans ? (
         <div style={{ display: "grid", gridTemplateColumns: mode === "rfi" ? "1fr 1fr" : "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
           <button onClick={function() { check("Fold"); }} style={{
@@ -1786,8 +1779,27 @@ function TrainerPage() {
           }}>{mode === "rfi" ? "RAISE 2.5x" : "3-BET"}</button>
         </div>
       ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 8, marginBottom: 14, animation: "fu 0.15s both" }}>
+          <button onClick={function() { setShowRange(!showRange); }} style={{
+            fontFamily: "var(--m)", fontSize: 11, fontWeight: 600, letterSpacing: "0.03em",
+            color: showRange ? C.gold : C.txm,
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid " + (showRange ? "rgba(212,167,44,0.15)" : "rgba(255,255,255,0.05)"),
+            borderRadius: 8, padding: "16px 18px", cursor: "pointer", whiteSpace: "nowrap",
+          }}>{showRange ? "HIDE" : "RANGE"}</button>
+          <button ref={nextHandRef} onClick={deal} style={{
+            fontFamily: "var(--m)", fontSize: 13, fontWeight: 700, letterSpacing: "0.06em",
+            color: "#000", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
+            border: "none", borderRadius: 8, padding: "16px", cursor: "pointer",
+            boxShadow: "0 2px 12px rgba(212,167,44,0.25)",
+          }}>NEXT HAND \u2192</button>
+        </div>
+      )}
+
+      {/* Result panel \u2014 slides in below the action row, never displaces it */}
+      {ans && (
         <div style={{ animation: "fu 0.15s both" }}>
-          <Glass style={{ padding: 18, marginBottom: 10 }}>
+          <Glass style={{ padding: 18, marginBottom: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <div style={{
                 width: 36, height: 36, borderRadius: 8, flexShrink: 0,
@@ -1830,21 +1842,6 @@ function TrainerPage() {
               </div>
             )}
           </Glass>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
-            <button onClick={function() { setShowRange(!showRange); }} style={{
-              fontFamily: "var(--m)", fontSize: 11, fontWeight: 600, letterSpacing: "0.03em",
-              color: showRange ? C.gold : C.txm,
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid " + (showRange ? "rgba(212,167,44,0.15)" : "rgba(255,255,255,0.05)"),
-              borderRadius: 8, padding: "13px", cursor: "pointer",
-            }}>{showRange ? "HIDE RANGE" : "SHOW RANGE"}</button>
-            <button ref={nextHandRef} onClick={deal} style={{
-              fontFamily: "var(--m)", fontSize: 11, fontWeight: 700, letterSpacing: "0.03em",
-              color: "#000", background: "linear-gradient(135deg," + C.gold + "," + C.goldL + ")",
-              border: "none", borderRadius: 8, padding: "13px", cursor: "pointer",
-              boxShadow: "0 2px 12px rgba(212,167,44,0.15)",
-            }}>NEXT HAND</button>
-          </div>
         </div>
       )}
 
