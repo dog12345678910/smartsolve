@@ -4931,6 +4931,7 @@ export default function App() {
   var auth = useAuth();
   var subscription = useSubscription(auth.user);
   var PAYWALL_ENABLED = false;
+  var UPLOADS_VISIBLE = false;
   var isPro = PAYWALL_ENABLED ? subscription.isPro : true;
   var _pg = useState("home"); var pg = _pg[0]; var setPg = _pg[1];
   var _hist = useState([]); var hist = _hist[0]; var setHist = _hist[1];
@@ -5006,6 +5007,10 @@ export default function App() {
     { id: "drills", icon: Ic.drill, t: "Drills", d: "Training drills" },
     { id: "help", icon: Ic.help, t: "Help", d: "Tips & tricks" },
   ];
+
+  if (!UPLOADS_VISIBLE) {
+    nav = nav.filter(function(n) { return n.id !== "uploads"; });
+  }
 
   var isAdmin = !!(auth.user && auth.user.email && ADMIN_EMAILS.indexOf(auth.user.email.toLowerCase()) >= 0);
   if (isAdmin) {
@@ -5116,7 +5121,7 @@ export default function App() {
               <div style={{ display: "flex", gap: 10 }}>
                 {[
                   { id: "trainer", label: "Start Training", sub: "Practice vs GTO", color: C.green },
-                  { id: "uploads", label: "Analyze Hand", sub: "Upload screenshot", color: C.gold },
+                  UPLOADS_VISIBLE ? { id: "uploads", label: "Analyze Hand", sub: "Upload screenshot", color: C.gold } : { id: "analytics", label: "Analytics", sub: "Track progress", color: C.gold },
                   { id: "study", label: "Study Ranges", sub: "Browse positions", color: C.blue },
                 ].map(function(item) {
                   return (
@@ -5183,7 +5188,7 @@ export default function App() {
           {pg === "study" && <StudyPage />}
           {pg === "trainer" && <TrainerPage user={auth.user} />}
           {pg === "analytics" && <AnalyticsPage history={hist} user={auth.user} />}
-          {pg === "uploads" && isPro && <UploadsPage onResult={addH} viewHand={viewHand} clearViewHand={function() { setViewHand(null); }} />}
+          {pg === "uploads" && isPro && UPLOADS_VISIBLE && <UploadsPage onResult={addH} viewHand={viewHand} clearViewHand={function() { setViewHand(null); }} />}
           {pg === "custom" && isPro && <CustomPage />}
           {pg === "builder" && <RangeBuilderPage />}
           {pg === "equity" && <EquityPage />}
