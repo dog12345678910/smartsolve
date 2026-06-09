@@ -1595,14 +1595,15 @@ function TrainerPage(props) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 14 }}>
           {[
             { label: "HANDS", value: stats.hands, color: C.txb },
-            { label: "ACCURACY", value: stats.hands ? pct + "%" : "—", color: pct >= 70 ? C.green : pct >= 40 ? C.amber : stats.hands ? C.red : C.txm },
+            { label: "ACCURACY", value: stats.hands ? pct + "%" : "—", sub: stats.hands ? stats.correct + "/" + stats.hands : null, color: pct >= 70 ? C.green : pct >= 40 ? C.amber : stats.hands ? C.red : C.txm },
             { label: "BEST STREAK", value: bestStreak, color: bestStreak >= 5 ? C.gold : C.txb },
             { label: "EV LOST", value: evLoss + "bb", color: evLoss > 0 ? C.red : C.green },
           ].map(function(s) {
             return (
               <div key={s.label} style={{ padding: "12px 8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: 10, textAlign: "center" }}>
                 <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 4 }}>{s.label}</div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: s.color, fontFamily: "var(--m)" }}>{s.value}</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: s.color, fontFamily: "var(--m)", lineHeight: 1 }}>{s.value}</div>
+                {s.sub && <div style={{ fontSize: 10, color: C.txm, fontFamily: "var(--m)", marginTop: 4 }}>{s.sub}</div>}
               </div>
             );
           })}
@@ -1774,14 +1775,15 @@ function TrainerPage(props) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
         {[
           { label: "HANDS", value: stats.hands, color: C.txb },
-          { label: "ACCURACY", value: stats.hands ? pct + "%" : "\u2014", color: pct >= 70 ? C.green : pct >= 40 ? C.amber : stats.hands ? C.red : C.txm },
+          { label: "ACCURACY", value: stats.hands ? pct + "%" : "\u2014", sub: stats.hands ? stats.correct + "/" + stats.hands : null, color: pct >= 70 ? C.green : pct >= 40 ? C.amber : stats.hands ? C.red : C.txm },
           { label: "STREAK", value: streak, color: streak >= 5 ? C.gold : C.txb },
           { label: "EV LOSS", value: evLoss ? evLoss + "bb" : "0", color: evLoss > 0 ? C.red : C.txb },
         ].map(function(s) {
           return (
             <div key={s.label} style={{ padding: "12px 8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, textAlign: "center" }}>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: C.txm, fontFamily: "var(--m)", marginBottom: 5 }}>{s.label}</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: s.color, fontFamily: "var(--m)" }}>{s.value}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: s.color, fontFamily: "var(--m)", lineHeight: 1 }}>{s.value}</div>
+              {s.sub && <div style={{ fontSize: 10, color: C.txm, fontFamily: "var(--m)", marginTop: 4 }}>{s.sub}</div>}
             </div>
           );
         })}
