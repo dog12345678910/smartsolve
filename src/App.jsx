@@ -4317,7 +4317,10 @@ function LandingPage(props) {
             <a href="#pricing">Get Started</a>
             <a href="#faq">FAQ</a>
           </div>
-          <a href="#pricing" className="nav-cta" onClick={goSignIn}>Sign Up Free</a>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <a href="#" className="nav-login" onClick={goSignIn} style={{ color: "var(--tx)", textDecoration: "none", fontSize: 14, fontWeight: 500, padding: "9px 4px" }}>Log in</a>
+            <a href="#pricing" className="nav-cta" onClick={goSignIn}>Sign Up Free</a>
+          </div>
         </div>
       </nav>
 
@@ -4331,7 +4334,7 @@ function LandingPage(props) {
               Sign Up Free
               <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </a>
-            <a href="#features" className="btn-ghost">See it work</a>
+            <a href="#" className="btn-ghost" onClick={goSignIn}>Log in</a>
           </div>
           <div className="hero-sites fu4">
             <span>Reads:</span>
