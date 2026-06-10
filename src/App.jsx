@@ -4934,7 +4934,7 @@ export default function App() {
   var auth = useAuth();
   var subscription = useSubscription(auth.user);
   var PAYWALL_ENABLED = false;
-  var UPLOADS_VISIBLE = false;
+  var UPLOADS_VISIBLE = true;
   var isPro = PAYWALL_ENABLED ? subscription.isPro : true;
   var _pg = useState("home"); var pg = _pg[0]; var setPg = _pg[1];
   var _hist = useState([]); var hist = _hist[0]; var setHist = _hist[1];
